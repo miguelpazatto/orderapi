@@ -1,11 +1,12 @@
 package com.miguelpazatto.orderapi.dtos;
 
+import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.entities.Product;
 
 import java.math.BigDecimal;
 import java.util.UUID;
 
-public record ProductResponseDTO(
+public record CustomerResponseDTO(
         UUID id,
         String name,
         String description,
@@ -14,7 +15,7 @@ public record ProductResponseDTO(
         String sku,
         String productStatus) {
 
-    public ProductResponseDTO(Product entity) {
+    public CustomerResponseDTO(Customer entity) {
         this(
                 entity.getId(),
                 entity.getName(),
