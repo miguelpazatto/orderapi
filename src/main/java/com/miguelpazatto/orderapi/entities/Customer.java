@@ -3,6 +3,7 @@ package com.miguelpazatto.orderapi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.List;
 import java.util.UUID;
 
 @Entity
@@ -27,5 +28,8 @@ public class Customer {
 
     @Column(nullable = false)
     private String phone;
+
+    @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
+    private List<Order> orderList;
 }
 
