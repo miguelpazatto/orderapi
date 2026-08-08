@@ -3,6 +3,7 @@ package com.miguelpazatto.orderapi.entities;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -29,7 +30,9 @@ public class Customer {
     @Column(nullable = false)
     private String phone;
 
+    private boolean active = true;
+
     @OneToMany(mappedBy = "customer", cascade = CascadeType.ALL)
-    private List<Order> orderList;
+    private List<Order> orderList = new ArrayList<>();
 }
 

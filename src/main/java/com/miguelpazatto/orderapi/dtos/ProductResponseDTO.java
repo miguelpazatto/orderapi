@@ -16,13 +16,13 @@ public record ProductResponseDTO(
 
     public ProductResponseDTO(Product entity) {
         this(
-            entity.getId(),
-            entity.getName(),
-            entity.getDescription(),
-            entity.getPrice(),
-            entity.getAvailableStock(),
-            entity.getSku(),
-            entity.getProductStatus().name()
+                entity.getId(),
+                entity.getName(),
+                entity.getDescription(),
+                entity.getPrice(),
+                entity.getAvailableStock(),
+                entity.getSku(),
+                entity.getProductStatus().name()
         );
     }
 
