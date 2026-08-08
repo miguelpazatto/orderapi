@@ -1,0 +1,4 @@
+name: dev - localhost
+values:
+  - key: baseUrl
+    value: ''

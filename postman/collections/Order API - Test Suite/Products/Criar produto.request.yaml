@@ -1,0 +1,20 @@
+$kind: http-request
+name: Criar produto
+url: "{{baseUrl}}/products"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Teclado Mecânico Gamer\",\r
+
+    \  \"description\": \"Teclado mecânico RGB switch blue\",\r
+
+    \  \"price\": 250.00,\r
+
+    \  \"availableStock\": 10,\r
+
+    \  \"sku\": \"TEC-RGB-01\"\r
+
+    }"
+order: 1786221083947
