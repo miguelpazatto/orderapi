@@ -1,10 +1,7 @@
 package com.miguelpazatto.orderapi.controllers;
 
 import com.miguelpazatto.orderapi.dtos.CustomerRequestDTO;
-import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
-import com.miguelpazatto.orderapi.dtos.ProductRequestDTO;
 import com.miguelpazatto.orderapi.dtos.ProductResponseDTO;
-import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.services.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;

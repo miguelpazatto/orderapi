@@ -1,7 +1,6 @@
 package com.miguelpazatto.orderapi.services;
 
 import com.miguelpazatto.orderapi.dtos.CustomerRequestDTO;
-import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
 import lombok.RequiredArgsConstructor;
