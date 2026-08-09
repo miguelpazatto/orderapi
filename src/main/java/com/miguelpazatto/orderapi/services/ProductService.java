@@ -7,6 +7,7 @@ import com.miguelpazatto.orderapi.entities.enums.ProductStatus;
 import com.miguelpazatto.orderapi.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
@@ -18,12 +19,14 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
+    @Transactional(readOnly = true)
     public List<ProductResponseDTO> findAll() {
         return productRepository.findAll().stream()
                 .map(ProductResponseDTO::new)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public ProductResponseDTO findById(UUID id) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));

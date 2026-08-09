@@ -1,6 +1,7 @@
 package com.miguelpazatto.orderapi.controllers;
 
 import com.miguelpazatto.orderapi.dtos.CustomerRequestDTO;
+import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.dtos.ProductResponseDTO;
 import com.miguelpazatto.orderapi.services.CustomerService;
 import jakarta.validation.Valid;
@@ -22,29 +23,25 @@ public class CustomerController {
 
     @GetMapping
     public ResponseEntity<List<CustomerResponseDTO>> findAll() {
-        List<CustomerResponseDTO> customers = customerService.findAll();
-        return ResponseEntity.ok().body(customers);
+        return ResponseEntity.ok().body(customerService.findAll());
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<CustomerResponseDTO> findById(
-            @PathVariable UUID id) {
-        CustomerResponseDTO customer = customerService.findById(id);
-        return ResponseEntity.ok().body(customer);
+    public ResponseEntity<CustomerResponseDTO> findById(@PathVariable UUID id) {
+        return ResponseEntity.ok().body(customerService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<CustomerResponseDTO> insert(
-            @RequestBody @Valid CustomerRequestDTO dto) {
+    public ResponseEntity<CustomerResponseDTO> insert(@RequestBody @Valid CustomerRequestDTO dto) {
         CustomerResponseDTO customer = customerService.insert(dto);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(customer.id()).toUri();
+        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
+                .buildAndExpand(customer.id()).toUri();
         return ResponseEntity.created(uri).body(customer);
     }
 
     @PutMapping(value = "/{id}")
     public ResponseEntity<CustomerResponseDTO> update(@PathVariable UUID id, @RequestBody @Valid CustomerRequestDTO dto) {
-        CustomerResponseDTO updatedCustomer = customerService.update(id, dto);
-        return ResponseEntity.ok().body(updatedCustomer);
+        return ResponseEntity.ok().body(customerService.update(id, dto));
     }
 
     @DeleteMapping(value = "/{id}")

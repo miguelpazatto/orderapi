@@ -45,6 +45,7 @@ public class OrderService {
         return new OrderResponseDTO(order);
     }
 
+    @Transactional
     public OrderResponseDTO insert(OrderRequestDTO dto) {
 
         Map<UUID, Integer> groupedItems = dto.items().stream()
@@ -90,6 +91,58 @@ public class OrderService {
         order.setTotalPrice(totalPrice);
         order.setOrderStatus(OrderStatus.WAITING_PAYMENT);
         order.setPurchaseMoment(Instant.now());
+
+        order = orderRepository.save(order);
+        return new OrderResponseDTO(order);
+    }
+
+    @Transactional
+    public OrderResponseDTO cancelOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+
+        if (order.getOrderStatus() == OrderStatus.DELIVERED ||
+                order.getOrderStatus() == OrderStatus.SHIPPED ||
+                order.getOrderStatus() == OrderStatus.CANCELED) {
+            throw new RuntimeException("Pedido já enviado, entregue ou cancelado");
+        }
+
+        for (OrderItem item : order.getOrderItemList()) {
+            Product product = item.getProduct();
+            product.setAvailableStock(product.getAvailableStock() + item.getQuantity());
+        }
+
+        order.setOrderStatus(OrderStatus.CANCELED);
+
+        order = orderRepository.save(order);
+        return new OrderResponseDTO(order);
+    }
+
+    @Transactional
+    public OrderResponseDTO shipOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+
+        if (order.getOrderStatus() != OrderStatus.PAID) {
+            throw new RuntimeException("Apenas pedidos com status PAGO podem ser enviados.");
+        }
+
+        order.setOrderStatus(OrderStatus.SHIPPED);
+
+        order = orderRepository.save(order);
+        return new OrderResponseDTO(order);
+    }
+
+    @Transactional
+    public OrderResponseDTO deliverOrder(UUID id) {
+        Order order = orderRepository.findById(id)
+                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+
+        if (order.getOrderStatus() != OrderStatus.SHIPPED) {
+            throw new RuntimeException("O pedido precisa ser ENVIADO antes de ser marcado como entregue.");
+        }
+
+        order.setOrderStatus(OrderStatus.DELIVERED);
 
         order = orderRepository.save(order);
         return new OrderResponseDTO(order);
