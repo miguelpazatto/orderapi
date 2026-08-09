@@ -25,54 +25,38 @@ public class ProductController {
 
     @GetMapping
     public ResponseEntity<List<ProductResponseDTO>> findAll() {
-        List<ProductResponseDTO> products = productService.findAll();
-        return ResponseEntity.ok().body(products);
+        return ResponseEntity.ok().body(productService.findAll());
     }
 
     @GetMapping(value = "/{id}")
-    public ResponseEntity<ProductResponseDTO> findById(
-            @PathVariable UUID id) {
-        ProductResponseDTO product = productService.findById(id);
-        return ResponseEntity.ok().body(product);
+    public ResponseEntity<ProductResponseDTO> findById(@PathVariable UUID id) {
+        return ResponseEntity.ok().body(productService.findById(id));
     }
 
     @PostMapping
-    public ResponseEntity<ProductResponseDTO> insert(
-            @RequestBody @Valid ProductRequestDTO dto) {
+    public ResponseEntity<ProductResponseDTO> insert(@RequestBody @Valid ProductRequestDTO dto) {
         ProductResponseDTO product = productService.insert(dto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(product.id()).toUri();
         return ResponseEntity.created(uri).body(product);
     }
 
     @PatchMapping(value = "/{id}/stock")
-    public ResponseEntity<ProductResponseDTO> updateStock(
-            @PathVariable UUID id,
-            @RequestParam Integer newStock) {
-        ProductResponseDTO product = productService.updateStock(id, newStock);
-        return ResponseEntity.ok().body(product);
+    public ResponseEntity<ProductResponseDTO> updateStock(@PathVariable UUID id, @RequestParam Integer newStock) {
+        return ResponseEntity.ok().body(productService.updateStock(id, newStock));
     }
 
     @PatchMapping(value = "/{id}/price")
-    public ResponseEntity<ProductResponseDTO> updatePrice(
-            @PathVariable UUID id,
-            @RequestParam BigDecimal newPrice) {
-        ProductResponseDTO product = productService.updatePrice(id, newPrice);
-        return ResponseEntity.ok().body(product);
+    public ResponseEntity<ProductResponseDTO> updatePrice(@PathVariable UUID id, @RequestParam BigDecimal newPrice) {
+        return ResponseEntity.ok().body(productService.updatePrice(id, newPrice));
     }
 
     @PatchMapping(value = "/{id}/status")
-    public ResponseEntity<ProductResponseDTO> updateStatus
-            (@PathVariable UUID id,
-             @RequestParam ProductStatus productStatus) {
-        ProductResponseDTO product = productService.updateStatus(id, productStatus);
-        return ResponseEntity.ok().body(product);
+    public ResponseEntity<ProductResponseDTO> updateStatus(@PathVariable UUID id, @RequestParam ProductStatus productStatus) {
+        return ResponseEntity.ok().body(productService.updateStatus(id, productStatus));
     }
 
     @PatchMapping(value = "/{id}")
-    public ResponseEntity<ProductResponseDTO> updateDetails(
-            @PathVariable UUID id,
-            @RequestBody @Valid ProductUpdateDetailsRequestDTO dto) {
-        ProductResponseDTO product = productService.updateDetails(id, dto.name(), dto.description());
-        return ResponseEntity.ok().body(product);
+    public ResponseEntity<ProductResponseDTO> updateDetails(@PathVariable UUID id, @RequestBody @Valid ProductUpdateDetailsRequestDTO dto) {
+        return ResponseEntity.ok().body(productService.updateDetails(id, dto.name(), dto.description()));
     }
 }

@@ -1,10 +1,12 @@
 package com.miguelpazatto.orderapi.services;
 
 import com.miguelpazatto.orderapi.dtos.CustomerRequestDTO;
+import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.UUID;
@@ -15,12 +17,14 @@ public class CustomerService {
 
     private final CustomerRepository customerRepository;
 
+    @Transactional(readOnly = true)
     public List<CustomerResponseDTO> findAll() {
         return customerRepository.findByActiveTrue().stream()
                 .map(CustomerResponseDTO::new)
                 .toList();
     }
 
+    @Transactional(readOnly = true)
     public CustomerResponseDTO findById(UUID id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cliente com ID " + id + " não encontrado"));
