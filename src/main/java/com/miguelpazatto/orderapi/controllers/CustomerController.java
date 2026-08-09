@@ -1,16 +1,13 @@
 package com.miguelpazatto.orderapi.controllers;
 
-import com.miguelpazatto.orderapi.dtos.CustomerRequestDTO;
 import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
-import com.miguelpazatto.orderapi.dtos.ProductResponseDTO;
+import com.miguelpazatto.orderapi.dtos.CustomerUpdateDTO;
 import com.miguelpazatto.orderapi.services.CustomerService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
-import java.net.URI;
 import java.util.List;
 import java.util.UUID;
 
@@ -31,16 +28,8 @@ public class CustomerController {
         return ResponseEntity.ok().body(customerService.findById(id));
     }
 
-    @PostMapping
-    public ResponseEntity<CustomerResponseDTO> insert(@RequestBody @Valid CustomerRequestDTO dto) {
-        CustomerResponseDTO customer = customerService.insert(dto);
-        URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
-                .buildAndExpand(customer.id()).toUri();
-        return ResponseEntity.created(uri).body(customer);
-    }
-
-    @PutMapping(value = "/{id}")
-    public ResponseEntity<CustomerResponseDTO> update(@PathVariable UUID id, @RequestBody @Valid CustomerRequestDTO dto) {
+    @PatchMapping(value = "/{id}")
+    public ResponseEntity<CustomerResponseDTO> update(@PathVariable UUID id, @RequestBody @Valid CustomerUpdateDTO dto) {
         return ResponseEntity.ok().body(customerService.update(id, dto));
     }
 
