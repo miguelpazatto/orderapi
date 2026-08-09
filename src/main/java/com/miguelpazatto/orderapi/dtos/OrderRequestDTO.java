@@ -12,6 +12,7 @@ public record OrderRequestDTO(
         UUID customerId,
 
         @NotEmpty(message = "O pedido deve conter pelo menos um item")
+        @NotNull(message = "A lista de itens não pode ser nula")
         @Valid
         List<OrderItemRequestDTO> items
 ) {
