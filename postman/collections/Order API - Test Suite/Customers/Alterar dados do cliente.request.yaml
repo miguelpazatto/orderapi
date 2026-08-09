@@ -1,0 +1,20 @@
+$kind: http-request
+name: Alterar dados do cliente
+url: "{{baseUrl}}/customers/{{customerId}}"
+method: PUT
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Miguel Pazatto Silva\",\r
+
+    \  \"email\": \"miguel.silva@email.com\",\r
+
+    \  \"phone\": \"(11) 98899-9999\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+order: 4000

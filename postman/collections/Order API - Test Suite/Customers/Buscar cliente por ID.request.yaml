@@ -1,0 +1,8 @@
+$kind: http-request
+url: "{{baseUrl}}/customers/{{customerId}}"
+method: GET
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+order: 3000

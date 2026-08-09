@@ -1,0 +1,22 @@
+$kind: http-request
+name: Criar cliente
+url: http://localhost:8080/customers
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Miguel Pazatto\",\r
+
+    \  \"email\": \"miguel@email.com\",\r
+
+    \  \"phone\": \"(11) 99999-9999\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "var jsonData = pm.response.json();\r
+
+      pm.environment.set(\"customerId\", jsonData.id);"
+    language: text/javascript
+order: 1000

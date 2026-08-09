@@ -1,0 +1,30 @@
+$kind: http-request
+name: Cria pedido
+url: "{{baseUrl}}/orders"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \  \"customerId\": \"{{customerId}}\",\r
+
+    \  \"items\": [\r
+
+    \    {\r
+
+    \      \"productId\": \"{{productId}}\",\r
+
+    \      \"quantity\": 2\r
+
+    \    }\r
+
+    \  ]\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: "var jsonData = pm.response.json();\r
+
+      pm.environment.set(\"orderId\", jsonData.id);"
+    language: text/javascript
+order: 1000

@@ -1,0 +1,5 @@
+$kind: http-request
+name: Busca todos pedidos
+url: "{{baseUrl}}/orders"
+method: GET
+order: 5000

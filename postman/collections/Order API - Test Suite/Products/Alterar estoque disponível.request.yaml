@@ -1,0 +1,7 @@
+$kind: http-request
+name: Alterar estoque disponível
+url: "{{baseUrl}}/products/{{productId}}/stock?newStock=15"
+method: PATCH
+queryParams:
+  newStock: "15"
+order: 7000

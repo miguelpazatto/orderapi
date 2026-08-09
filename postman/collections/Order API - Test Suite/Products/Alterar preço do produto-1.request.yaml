@@ -1,0 +1,7 @@
+$kind: http-request
+name: Alterar preço do produto
+url: "{{baseUrl}}/products/{{productId}}/price?newPrice=299.90"
+method: PATCH
+queryParams:
+  newPrice: "299.90"
+order: 4000

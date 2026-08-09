@@ -1,0 +1,18 @@
+$kind: http-request
+name: Alterar informações do produto
+url: "{{baseUrl}}/products/{{productId}}"
+method: PATCH
+body:
+  type: json
+  content: "{\r
+
+    \  \"name\": \"Teclado Mecânico RGB - Atualizado\",\r
+
+    \  \"description\": \"Teclado mecânico silencioso com switches red e layout ABNT2\"\r
+
+    }"
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+order: 5446

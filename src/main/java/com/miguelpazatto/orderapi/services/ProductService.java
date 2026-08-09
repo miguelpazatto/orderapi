@@ -34,6 +34,7 @@ public class ProductService {
         return new ProductResponseDTO(product);
     }
 
+    @Transactional
     public ProductResponseDTO insert(ProductRequestDTO dto) {
         if (productRepository.existsBySku(dto.sku())) {
             throw new RuntimeException("Já existe um produto cadastrado com o SKU: " + dto.sku());
@@ -52,6 +53,7 @@ public class ProductService {
     }
 
 
+    @Transactional
     public ProductResponseDTO updateStock(UUID id, Integer newStock) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
@@ -63,6 +65,7 @@ public class ProductService {
         return new ProductResponseDTO(product);
     }
 
+    @Transactional
     public ProductResponseDTO updatePrice(UUID id, BigDecimal newPrice) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
@@ -77,6 +80,7 @@ public class ProductService {
         return new ProductResponseDTO(product);
     }
 
+    @Transactional
     public ProductResponseDTO updateStatus(UUID id, ProductStatus productStatus) {
         if (productStatus == null) {
             throw new RuntimeException("O status do produto não pode ser nulo");
@@ -95,6 +99,7 @@ public class ProductService {
         return new ProductResponseDTO(product);
     }
 
+    @Transactional
     public ProductResponseDTO updateDetails(UUID id, String newName, String newDescription) {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));

@@ -1,0 +1,9 @@
+$kind: http-request
+name: Buscar todos clientes
+url: "{{baseUrl}}/customers"
+method: GET
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+order: 2000

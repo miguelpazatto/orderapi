@@ -1,0 +1,7 @@
+$kind: http-request
+name: Alterar status do produto
+url: "{{baseUrl}}/products/{{productId}}/status?productStatus=OUT_OF_STOCK"
+method: PATCH
+queryParams:
+  productStatus: OUT_OF_STOCK
+order: 6000

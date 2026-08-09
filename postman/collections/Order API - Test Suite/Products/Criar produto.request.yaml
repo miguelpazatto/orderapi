@@ -14,7 +14,16 @@ body:
 
     \  \"availableStock\": 10,\r
 
-    \  \"sku\": \"TEC-RGB-01\"\r
+    \  \"sku\": \"TEC-RGB-01-{{$timestamp}}\"\r
 
     }"
-order: 1786221083947
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+  - type: afterResponse
+    code: "var jsonData = pm.response.json();\r
+
+      pm.environment.set(\"productId\", jsonData.id);"
+    language: text/javascript
+order: 1000

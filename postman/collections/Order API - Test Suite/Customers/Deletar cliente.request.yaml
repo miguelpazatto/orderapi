@@ -1,0 +1,9 @@
+$kind: http-request
+name: Deletar cliente
+url: "{{baseUrl}}/customers/{{customerId}}"
+method: DELETE
+scripts:
+  - type: afterResponse
+    code: ""
+    language: text/javascript
+order: 4933

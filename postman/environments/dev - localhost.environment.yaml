@@ -2,3 +2,9 @@ name: dev - localhost
 values:
   - key: baseUrl
     value: ''
+  - key: productId
+    value: ''
+  - key: customerId
+    value: ''
+  - key: orderId
+    value: ''
