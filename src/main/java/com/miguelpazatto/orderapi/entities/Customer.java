@@ -13,12 +13,11 @@ import java.util.UUID;
 @Setter
 @AllArgsConstructor
 @NoArgsConstructor
-@EqualsAndHashCode(onlyExplicitlyIncluded = true)
+@EqualsAndHashCode(of = "id")
 public class Customer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @EqualsAndHashCode.Include
     private UUID id;
 
     @Column(nullable = false)
@@ -29,6 +28,10 @@ public class Customer {
 
     @Column(nullable = false)
     private String phone;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    private User user;
 
     private boolean active = true;
 

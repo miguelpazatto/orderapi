@@ -1,9 +1,12 @@
 package com.miguelpazatto.orderapi.services;
 
-import com.miguelpazatto.orderapi.dtos.CustomerRequestDTO;
+import com.miguelpazatto.orderapi.dtos.CustomerRegistrationDTO;
 import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
+import com.miguelpazatto.orderapi.dtos.CustomerUpdateDTO;
 import com.miguelpazatto.orderapi.entities.Customer;
+import com.miguelpazatto.orderapi.entities.User;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,28 +35,24 @@ public class CustomerService {
         return new CustomerResponseDTO(customer);
     }
 
-    public CustomerResponseDTO insert(CustomerRequestDTO dto) {
-        if (customerRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Já existe um cliente cadastrado com email: " + dto.email());
-        }
-
+    @Transactional
+    public CustomerResponseDTO createCustomerProfile(CustomerRegistrationDTO dto, User user) {
         Customer customer = new Customer();
         customer.setName(dto.name());
         customer.setEmail(dto.email());
         customer.setPhone(dto.phone());
+
+        customer.setUser(user);
         customer.setActive(true);
 
         customer = customerRepository.save(customer);
         return new CustomerResponseDTO(customer);
     }
 
-    public CustomerResponseDTO update(UUID id, CustomerRequestDTO dto) {
+    @Transactional
+    public CustomerResponseDTO update(UUID id, CustomerUpdateDTO dto) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cliente com ID " + id + " não encontrado"));
-
-        if (!customer.getEmail().equals(dto.email()) && customerRepository.existsByEmail(dto.email())) {
-            throw new RuntimeException("Já existe um cliente cadastrado com email: " + dto.email());
-        }
 
         updateData(customer, dto);
 
@@ -61,17 +60,23 @@ public class CustomerService {
         return new CustomerResponseDTO(customer);
     }
 
+    @Transactional
     public void delete(UUID id) {
         Customer customer = customerRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Cliente com ID " + id + " não encontrado"));
 
         customer.setActive(false);
+
+        User user = customer.getUser();
+        if (user != null) {
+            user.setActive(false);
+        }
+
         customerRepository.save(customer);
     }
 
-    public void updateData(Customer entity, CustomerRequestDTO dto) {
+    public void updateData(Customer entity, CustomerUpdateDTO dto) {
         entity.setName(dto.name());
-        entity.setEmail(dto.email());
         entity.setPhone(dto.phone());
     }
 }
