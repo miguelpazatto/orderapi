@@ -1,14 +1,12 @@
 $kind: http-request
 name: Alterar dados do cliente
 url: "{{baseUrl}}/customers/{{customerId}}"
-method: PUT
+method: PATCH
 body:
   type: json
   content: "{\r
 
     \  \"name\": \"Miguel Pazatto Silva\",\r
-
-    \  \"email\": \"miguel.silva@email.com\",\r
 
     \  \"phone\": \"(11) 98899-9999\"\r
 

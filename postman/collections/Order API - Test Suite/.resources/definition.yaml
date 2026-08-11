@@ -1,2 +1,8 @@
 $kind: collection
 name: Order API - Test Suite
+auth:
+  - id: 1ea0ba8e-99e5-4e73-b63c-57a5bb411e94
+    type: bearer
+    name: Bearer Token
+    credentials:
+      token: "{{token}}"

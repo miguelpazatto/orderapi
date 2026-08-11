@@ -6,6 +6,7 @@ import com.miguelpazatto.orderapi.dtos.CustomerUpdateDTO;
 import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.entities.User;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
+import com.miguelpazatto.orderapi.services.exceptions.DataConflictException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -37,6 +38,10 @@ public class CustomerService {
 
     @Transactional
     public CustomerResponseDTO createCustomerProfile(CustomerRegistrationDTO dto, User user) {
+        if (customerRepository.existsByEmail(dto.email())) {
+            throw new DataConflictException("Este e-mail já está cadastrado no sistema.");
+        }
+
         Customer customer = new Customer();
         customer.setName(dto.name());
         customer.setEmail(dto.email());

@@ -1,0 +1,22 @@
+$kind: http-request
+name: Criar registro
+url: "{{baseUrl}}/auth/register"
+method: POST
+body:
+  type: json
+  content: "{\r
+
+    \    \"name\": \"Miguel\",\r
+
+    \    \"phone\": \"(11) 99999-9999\",\r
+
+    \    \"email\": \"miguel_@email.com\",\r
+
+    \    \"password\": \"senha123\"\r
+
+    }"
+scripts:
+  - type: beforeRequest
+    code: ""
+    language: text/javascript
+order: 1997

@@ -45,9 +45,9 @@ public class SecurityConfig {
                         .requestMatchers("/orders/**").authenticated()
 
                         // 5. Clientes / Backoffice (Regras mais rígidas para gestão de clientes)
-                        .requestMatchers(HttpMethod.GET, "/customers").hasRole("ADMIN") // Só admin lista todo mundo
-                        .requestMatchers(HttpMethod.DELETE, "/customers/**").hasRole("ADMIN") // Só admin deleta conta sumariamente
-                        .requestMatchers("/customers/**").authenticated() // O cliente logado pode dar GET e PUT no próprio ID
+                        .requestMatchers(HttpMethod.GET, "/customers").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.DELETE, "/customers/**").hasRole("ADMIN")
+                        .requestMatchers("/customers/**").authenticated()
 
                         // 6. Fechadura de segurança padrão (Qualquer rota não mapeada acima exige token)
                         .anyRequest().authenticated()
