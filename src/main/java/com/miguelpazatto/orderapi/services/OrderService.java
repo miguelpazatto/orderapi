@@ -1,5 +1,7 @@
 package com.miguelpazatto.orderapi.services;
 
+import com.miguelpazatto.orderapi.config.RabbitMQConfig;
+import com.miguelpazatto.orderapi.dtos.OrderCreatedEventDTO;
 import com.miguelpazatto.orderapi.dtos.OrderItemRequestDTO;
 import com.miguelpazatto.orderapi.dtos.OrderRequestDTO;
 import com.miguelpazatto.orderapi.dtos.OrderResponseDTO;
@@ -11,6 +13,8 @@ import com.miguelpazatto.orderapi.entities.enums.OrderStatus;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
 import com.miguelpazatto.orderapi.repositories.OrderRepository;
 import com.miguelpazatto.orderapi.repositories.ProductRepository;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,6 +26,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderService {
@@ -29,6 +34,8 @@ public class OrderService {
     private final OrderRepository orderRepository;
     private final CustomerRepository customerRepository;
     private final ProductRepository productRepository;
+
+    private final RabbitTemplate rabbitTemplate;
 
     @Transactional(readOnly = true)
     public List<OrderResponseDTO> findAll() {
@@ -93,6 +100,18 @@ public class OrderService {
         order.setPurchaseMoment(Instant.now());
 
         order = orderRepository.save(order);
+        log.info("Pedido {} salvo no banco de dados com sucesso.", order.getId());
+
+        OrderCreatedEventDTO evento = new OrderCreatedEventDTO(order);
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_PEDIDOS,
+                RabbitMQConfig.ROTA_PEDIDO_CRIADO,
+                evento
+        );
+
+        log.info("Evento de criação do pedido {} enviado para a fila de pagamentos.", order.getId());
+
         return new OrderResponseDTO(order);
     }
 
