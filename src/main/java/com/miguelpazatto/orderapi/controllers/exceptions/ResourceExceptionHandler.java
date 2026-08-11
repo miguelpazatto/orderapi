@@ -3,6 +3,7 @@ package com.miguelpazatto.orderapi.controllers.exceptions;
 import com.miguelpazatto.orderapi.services.exceptions.BusinessRuleException;
 import com.miguelpazatto.orderapi.services.exceptions.DataConflictException;
 import com.miguelpazatto.orderapi.services.exceptions.ResourceNotFoundException;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -39,6 +40,18 @@ public class ResourceExceptionHandler {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.CONFLICT, e.getMessage());
         problemDetail.setTitle("Data Conflict");
         problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
+    @ExceptionHandler(DataIntegrityViolationException.class)
+    public ProblemDetail handleDataIntegrityViolation(DataIntegrityViolationException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.CONFLICT,
+                "Conflito de integridade: você tentou manipular um dado que já existe ou fere uma restrição do banco."
+        );
+        problemDetail.setTitle("Data Integrity Violation");
+        problemDetail.setProperty("timestamp", Instant.now());
+
         return problemDetail;
     }
 
