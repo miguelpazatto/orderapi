@@ -12,6 +12,8 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class RabbitMQConfig {
 
+    // ORDER AS PRODUCTOR CONFIG
+
     public static final String FILA_PAGAMENTO = "pagamento.queue";
     public static final String EXCHANGE_PEDIDOS = "pedidos.exchange";
     public static final String ROTA_PEDIDO_CRIADO = "pedido.criado.routing.key";
@@ -35,4 +37,9 @@ public class RabbitMQConfig {
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
+
+    // PAYMENT AS PRODUCTOR CONFIG
+
+    private static final String FILA_STATUS_PAGAMENTO = "status.pagemento.queue";
+    private static final
 }

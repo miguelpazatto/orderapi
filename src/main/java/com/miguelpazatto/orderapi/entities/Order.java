@@ -37,9 +37,6 @@ public class Order {
     @Column(nullable = false)
     private OrderStatus orderStatus;
 
-    @OneToOne(mappedBy = "order", cascade = CascadeType.ALL)
-    private Payment payment;
-
     @OneToMany(mappedBy = "order", cascade = CascadeType.ALL)
     private List<OrderItem> orderItemList = new ArrayList<>();
 
