@@ -10,7 +10,7 @@ body:
 
     \    \"phone\": \"(11) 99999-9999\",\r
 
-    \    \"email\": \"miguel_@email.com\",\r
+    \    \"email\": \"miguel1@email.com\",\r
 
     \    \"password\": \"senha123\"\r
 
@@ -18,5 +18,10 @@ body:
 scripts:
   - type: beforeRequest
     code: ""
+    language: text/javascript
+  - type: afterResponse
+    code: "var jsonData = pm.response.json();\r
+
+      pm.environment.set(\"customerId\", jsonData.id);"
     language: text/javascript
 order: 1997

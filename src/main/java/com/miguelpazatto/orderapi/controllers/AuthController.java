@@ -2,6 +2,7 @@ package com.miguelpazatto.orderapi.controllers;
 
 import com.miguelpazatto.orderapi.dtos.AuthenticationDTO;
 import com.miguelpazatto.orderapi.dtos.CustomerRegistrationDTO;
+import com.miguelpazatto.orderapi.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.dtos.TokenDTO;
 import com.miguelpazatto.orderapi.entities.User;
 import com.miguelpazatto.orderapi.entities.enums.UserRole;
@@ -43,7 +44,7 @@ public class AuthController {
     }
 
     @PostMapping("/register")
-    public ResponseEntity<Void> register(@RequestBody @Valid CustomerRegistrationDTO dto) {
+    public ResponseEntity<CustomerResponseDTO> register(@RequestBody @Valid CustomerRegistrationDTO dto) {
         if (userRepository.findByEmail(dto.email()) != null) {
             return ResponseEntity.status(HttpStatus.CONFLICT).build();
         }
@@ -63,6 +64,13 @@ public class AuthController {
                 .buildAndExpand(createdCustomer.id())
                 .toUri();
 
-        return ResponseEntity.created(uri).build();
+        CustomerResponseDTO response = new CustomerResponseDTO(
+                createdCustomer.id(),
+                createdCustomer.name(),
+                createdCustomer.email(),
+                createdCustomer.phone()
+        );
+
+        return ResponseEntity.created(uri).body(response);
     }
 }

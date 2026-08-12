@@ -2,11 +2,11 @@ name: dev - localhost
 values:
   - key: baseUrl
     value: ''
-  - key: productId
-    value: ''
   - key: customerId
+    value: ''
+  - key: token
     value: ''
   - key: orderId
     value: ''
-  - key: token
+  - key: productId
     value: ''
