@@ -11,6 +11,8 @@ import com.miguelpazatto.orderapi.entities.enums.PaymentStatus;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
 import com.miguelpazatto.orderapi.repositories.OrderRepository;
 import com.miguelpazatto.orderapi.repositories.ProductRepository;
+import com.miguelpazatto.orderapi.services.exceptions.BusinessRuleException;
+import com.miguelpazatto.orderapi.services.exceptions.ResourceNotFoundException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.transaction.annotation.Transactional;
@@ -45,7 +47,7 @@ public class OrderService {
     @Transactional(readOnly = true)
     public OrderResponseDTO findById(UUID id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
         return new OrderResponseDTO(order);
     }
@@ -61,7 +63,7 @@ public class OrderService {
                 ));
 
         Customer customer = customerRepository.findById(dto.customerId())
-                .orElseThrow(() -> new RuntimeException("Cliente com ID " + dto.customerId() + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente com ID " + dto.customerId() + " não encontrado"));
 
         Order order = new Order();
         order.setCustomer(customer);
@@ -73,10 +75,10 @@ public class OrderService {
             Integer quantity = entry.getValue();
 
             Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new RuntimeException("Produto com ID " + productId + " não encontrado"));
+                    .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + productId + " não encontrado"));
 
             if (product.getAvailableStock() < quantity) {
-                throw new RuntimeException("Não há estoque disponível pro produto " + product.getName());
+                throw new BusinessRuleException("Não há estoque disponível pro produto " + product.getName());
             }
 
             product.setAvailableStock(product.getAvailableStock() - quantity);
@@ -116,12 +118,12 @@ public class OrderService {
     @Transactional
     public OrderResponseDTO cancelOrder(UUID id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
         if (order.getOrderStatus() == OrderStatus.DELIVERED ||
                 order.getOrderStatus() == OrderStatus.SHIPPED ||
                 order.getOrderStatus() == OrderStatus.CANCELED) {
-            throw new RuntimeException("Pedido já enviado, entregue ou cancelado");
+            throw new BusinessRuleException("Pedido já enviado, entregue ou cancelado");
         }
 
         for (OrderItem item : order.getOrderItemList()) {
@@ -138,10 +140,10 @@ public class OrderService {
     @Transactional
     public OrderResponseDTO shipOrder(UUID id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
         if (order.getOrderStatus() != OrderStatus.PAID) {
-            throw new RuntimeException("Apenas pedidos com status PAGO podem ser enviados.");
+            throw new BusinessRuleException("Apenas pedidos com status PAGO podem ser enviados.");
         }
 
         order.setOrderStatus(OrderStatus.SHIPPED);
@@ -153,10 +155,10 @@ public class OrderService {
     @Transactional
     public OrderResponseDTO deliverOrder(UUID id) {
         Order order = orderRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Pedido com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
         if (order.getOrderStatus() != OrderStatus.SHIPPED) {
-            throw new RuntimeException("O pedido precisa ser ENVIADO antes de ser marcado como entregue.");
+            throw new BusinessRuleException("O pedido precisa ser ENVIADO antes de ser marcado como entregue.");
         }
 
         order.setOrderStatus(OrderStatus.DELIVERED);
@@ -167,7 +169,7 @@ public class OrderService {
 
     public void atualizarStatusPagamento(UUID orderId, PaymentStatus paymentStatus) {
         Order order = orderRepository.findById(orderId)
-                .orElseThrow(() -> new RuntimeException("Pedido com ID " + orderId + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + orderId + " não encontrado"));
 
         if (paymentStatus == PaymentStatus.APPROVED) {
             order.setOrderStatus(OrderStatus.PAID);

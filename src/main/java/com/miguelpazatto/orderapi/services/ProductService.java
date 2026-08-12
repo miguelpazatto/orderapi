@@ -5,6 +5,9 @@ import com.miguelpazatto.orderapi.dtos.ProductResponseDTO;
 import com.miguelpazatto.orderapi.entities.Product;
 import com.miguelpazatto.orderapi.entities.enums.ProductStatus;
 import com.miguelpazatto.orderapi.repositories.ProductRepository;
+import com.miguelpazatto.orderapi.services.exceptions.BusinessRuleException;
+import com.miguelpazatto.orderapi.services.exceptions.DataConflictException;
+import com.miguelpazatto.orderapi.services.exceptions.ResourceNotFoundException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +32,7 @@ public class ProductService {
     @Transactional(readOnly = true)
     public ProductResponseDTO findById(UUID id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
         return new ProductResponseDTO(product);
     }
@@ -37,7 +40,7 @@ public class ProductService {
     @Transactional
     public ProductResponseDTO insert(ProductRequestDTO dto) {
         if (productRepository.existsBySku(dto.sku())) {
-            throw new RuntimeException("Já existe um produto cadastrado com o SKU: " + dto.sku());
+            throw new DataConflictException("Já existe um produto cadastrado com o SKU: " + dto.sku());
         }
 
         Product product = new Product();
@@ -56,7 +59,7 @@ public class ProductService {
     @Transactional
     public ProductResponseDTO updateStock(UUID id, Integer newStock) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
         product.setAvailableStock(newStock);
         product.setProductStatus(newStock > 0 ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK);
@@ -68,10 +71,10 @@ public class ProductService {
     @Transactional
     public ProductResponseDTO updatePrice(UUID id, BigDecimal newPrice) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
         if (newPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new RuntimeException("O valor do produto deve ser maior que zero");
+            throw new BusinessRuleException("O valor do produto deve ser maior que zero");
         }
 
         product.setPrice(newPrice);
@@ -83,14 +86,14 @@ public class ProductService {
     @Transactional
     public ProductResponseDTO updateStatus(UUID id, ProductStatus productStatus) {
         if (productStatus == null) {
-            throw new RuntimeException("O status do produto não pode ser nulo");
+            throw new BusinessRuleException("O status do produto não pode ser nulo");
         }
 
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
 
         if (product.getProductStatus().equals(productStatus)) {
-            throw new RuntimeException("O produto já se encontra com o status " + productStatus);
+            throw new DataConflictException("O produto já se encontra com o status " + productStatus);
         }
 
         product.setProductStatus(productStatus);
@@ -102,7 +105,7 @@ public class ProductService {
     @Transactional
     public ProductResponseDTO updateDetails(UUID id, String newName, String newDescription) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
         if (newName != null && !newName.isBlank()) {
             product.setName(newName);

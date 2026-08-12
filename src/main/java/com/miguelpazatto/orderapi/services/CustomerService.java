@@ -7,6 +7,7 @@ import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.entities.User;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
 import com.miguelpazatto.orderapi.services.exceptions.DataConflictException;
+import com.miguelpazatto.orderapi.services.exceptions.ResourceNotFoundException;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -31,7 +32,7 @@ public class CustomerService {
     @Transactional(readOnly = true)
     public CustomerResponseDTO findById(UUID id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente com ID " + id + " não encontrado"));
 
         return new CustomerResponseDTO(customer);
     }
@@ -57,7 +58,7 @@ public class CustomerService {
     @Transactional
     public CustomerResponseDTO update(UUID id, CustomerUpdateDTO dto) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente com ID " + id + " não encontrado"));
 
         updateData(customer, dto);
 
@@ -68,7 +69,7 @@ public class CustomerService {
     @Transactional
     public void delete(UUID id) {
         Customer customer = customerRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Cliente com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente com ID " + id + " não encontrado"));
 
         customer.setActive(false);
 
