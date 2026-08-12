@@ -19,7 +19,7 @@ public class PaymentListener {
         log.info("=====================================================");
         log.info("📬 [RABBITMQ] Novo evento consumido da fila: {}", RabbitMQConfig.FILA_PAGAMENTO);
 
-        paymentService.processarPagamento(evento);
+        paymentService.processarPagamento(evento.orderId(), evento.totalPrice());
 
         log.info("=====================================================");
     }

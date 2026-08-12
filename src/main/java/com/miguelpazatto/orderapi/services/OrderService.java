@@ -1,15 +1,13 @@
 package com.miguelpazatto.orderapi.services;
 
 import com.miguelpazatto.orderapi.config.RabbitMQConfig;
-import com.miguelpazatto.orderapi.dtos.OrderCreatedEventDTO;
-import com.miguelpazatto.orderapi.dtos.OrderItemRequestDTO;
-import com.miguelpazatto.orderapi.dtos.OrderRequestDTO;
-import com.miguelpazatto.orderapi.dtos.OrderResponseDTO;
+import com.miguelpazatto.orderapi.dtos.*;
 import com.miguelpazatto.orderapi.entities.Customer;
 import com.miguelpazatto.orderapi.entities.Order;
 import com.miguelpazatto.orderapi.entities.OrderItem;
 import com.miguelpazatto.orderapi.entities.Product;
 import com.miguelpazatto.orderapi.entities.enums.OrderStatus;
+import com.miguelpazatto.orderapi.entities.enums.PaymentStatus;
 import com.miguelpazatto.orderapi.repositories.CustomerRepository;
 import com.miguelpazatto.orderapi.repositories.OrderRepository;
 import com.miguelpazatto.orderapi.repositories.ProductRepository;
@@ -167,4 +165,19 @@ public class OrderService {
         return new OrderResponseDTO(order);
     }
 
+    public void atualizarStatusPagamento(UUID orderId, PaymentStatus paymentStatus) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new RuntimeException("Pedido com ID " + orderId + " não encontrado"));
+
+        if (paymentStatus == PaymentStatus.APPROVED) {
+            order.setOrderStatus(OrderStatus.PAID);
+            log.info("Pedido {} atualizado para PAID!", orderId);
+
+        } else if (paymentStatus == PaymentStatus.REJECTED) {
+            order.setOrderStatus(OrderStatus.PAYMENT_FAILED);
+            log.info("❌ Pedido {} com falha no pagamento. Aguardando nova tentativa.", orderId);
+        }
+
+        orderRepository.save(order);
+    }
 }
