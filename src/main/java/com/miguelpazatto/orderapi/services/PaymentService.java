@@ -54,20 +54,6 @@ public class PaymentService {
         } catch (StripeException e) {
             log.error("Erro ao comunicar com o Stripe na criação", e);
         }
-
-        paymentRepository.save(payment);
-        log.info("Status final do pagamento {}: atualizado no banco.", payment.getId());
-
-        PaymentProcessedEventDTO eventoSaida = new PaymentProcessedEventDTO(payment);
-
-        rabbitTemplate.convertAndSend(
-                RabbitMQConfig.EXCHANGE_PAGAMENTO_CONCLUIDO,
-                "",
-                eventoSaida
-        );
-
-        log.info("Mensagem de pagamento concluído disparada para a Exchange Fanout!");
-
     }
 
 }

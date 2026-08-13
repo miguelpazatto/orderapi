@@ -70,4 +70,45 @@ public class RabbitMQConfig {
     public Binding bindingNotificacao(Queue notificacaoQueue, FanoutExchange pagamentoConcluidoExchange) {
         return BindingBuilder.bind(notificacaoQueue).to(pagamentoConcluidoExchange);
     }
+
+    // ===============================================================
+    // --- MÓDULO WEBHOOK STRIPE (Ouvindo o provedor de pagamento) ---
+    // ===============================================================
+
+    public static final String FILA_WEBHOOK_SUCESSO = "webhook.pagamento.sucesso.queue";
+    public static final String FILA_WEBHOOK_FALHA = "webhook.pagamento.falha.queue";
+    public static final String EXCHANGE_WEBHOOK = "webhook.stripe.exchange";
+    public static final String ROTA_WEBHOOK_SUCESSO = "stripe.sucesso.routing.key";
+    public static final String ROTA_WEBHOOK_FALHA = "stripe.falha.routing.key";
+
+    @Bean
+    public Queue webhookSucessoQueue() {
+        return new Queue(FILA_WEBHOOK_SUCESSO, true);
+    }
+
+    @Bean
+    public Queue webhookFalhaQueue() {
+        return new Queue(FILA_WEBHOOK_FALHA, true);
+    }
+
+    @Bean
+    public DirectExchange webhookExchange() {
+        return new DirectExchange(EXCHANGE_WEBHOOK);
+    }
+
+    @Bean
+    public Binding bindingWebhookSucesso(Queue webhookSucessoQueue, DirectExchange webhookExchange) {
+        return BindingBuilder
+                .bind(webhookSucessoQueue)
+                .to(webhookExchange)
+                .with(ROTA_WEBHOOK_SUCESSO);
+    }
+
+    @Bean
+    public Binding bindingWebhookFalha(Queue webhookFalhaQueue, DirectExchange webhookExchange) {
+        return BindingBuilder
+                .bind(webhookFalhaQueue)
+                .to(webhookExchange)
+                .with(ROTA_WEBHOOK_FALHA);
+    }
 }
