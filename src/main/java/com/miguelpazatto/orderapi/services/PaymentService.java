@@ -56,4 +56,49 @@ public class PaymentService {
         }
     }
 
+    public void processarPagamentoAprovado(UUID paymentId) {
+        log.info("Processando aprovação para o pagamento ID: {}", paymentId);
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Pagamento não encontrado com o ID: " + paymentId));
+
+        payment.setPaymentStatus(PaymentStatus.APPROVED);
+        paymentRepository.save(payment);
+
+        log.info("Pagamento {} atualizado para APPROVED no banco.", paymentId);
+
+        PaymentProcessedEventDTO event = new PaymentProcessedEventDTO(payment);
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_PAGAMENTO_CONCLUIDO,
+                "",
+                event
+        );
+
+        log.info("Mudança de status e notificação de pagamento concluído disparada para a Exchange Fanout!");
+    }
+
+    public void processarPagamentoRecusado(UUID paymentId) {
+        log.info("Processando recusa para o pagamento ID: {}", paymentId);
+
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new RuntimeException("Pagamento não encontrado com o ID: " + paymentId));
+
+        payment.setPaymentStatus(PaymentStatus.REJECTED);
+        paymentRepository.save(payment);
+
+        log.warn("Pagamento {} atualizado para REJECTED no banco de dados.", paymentId);
+        // TODO: Implementar no futuro o fluxo de cancelamento do pedido:
+
+        PaymentProcessedEventDTO event = new PaymentProcessedEventDTO(payment);
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_PAGAMENTO_CONCLUIDO,
+                "",
+                event
+        );
+
+        log.info("Mudança de status e notificação de pagamento concluído disparada para a Exchange Fanout!");
+    }
+
 }
