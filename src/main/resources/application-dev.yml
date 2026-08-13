@@ -15,6 +15,17 @@ spring:
     port: 5672
     username: admin
     password: admin123
+  mail:
+    host: sandbox.smtp.mailtrap.io
+    port: 2525
+    username: ${MAILTRAP_USER}
+    password: ${MAILTRAP_PASS}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
 
 api:
   security:
