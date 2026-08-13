@@ -31,3 +31,8 @@ api:
   security:
     token:
       secret: 123456
+
+app:
+  mail:
+    remetente: nao-responda@orderapi.com.br
+    admin: admin@sualoja.com.br

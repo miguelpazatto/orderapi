@@ -39,7 +39,7 @@ public class SecurityConfig {
 
                         // 3. Gestão Logística de Pedidos (Apenas ADMIN envia e entrega)
                         .requestMatchers(HttpMethod.PATCH, "/orders/*/ship").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/orders/*/deliver").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/orders/*/deliver").hasRole("CUSTOMER")
 
                         // 4. Pedidos Gerais (Clientes logados podem criar, listar os seus e cancelar)
                         .requestMatchers("/orders/**").authenticated()

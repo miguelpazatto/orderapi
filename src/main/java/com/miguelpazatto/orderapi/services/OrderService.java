@@ -37,6 +37,8 @@ public class OrderService {
 
     private final RabbitTemplate rabbitTemplate;
 
+    private final EmailService emailService;
+
     @Transactional(readOnly = true)
     public List<OrderResponseDTO> findAll() {
         return orderRepository.findAll().stream()
@@ -149,6 +151,8 @@ public class OrderService {
         order.setOrderStatus(OrderStatus.SHIPPED);
 
         order = orderRepository.save(order);
+        emailService.enviarEmailPedidoEnviado(order.getId(), order.getCustomer().getEmail());
+
         return new OrderResponseDTO(order);
     }
 
@@ -164,9 +168,12 @@ public class OrderService {
         order.setOrderStatus(OrderStatus.DELIVERED);
 
         order = orderRepository.save(order);
+        emailService.enviarEmailConfirmacaoEntrega(order.getId(), order.getCustomer().getEmail());
+
         return new OrderResponseDTO(order);
     }
 
+    @Transactional
     public void atualizarStatusPagamento(UUID orderId, PaymentStatus paymentStatus) {
         Order order = orderRepository.findById(orderId)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + orderId + " não encontrado"));
