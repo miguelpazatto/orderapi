@@ -17,13 +17,9 @@ public class PaymentListener {
 
     @RabbitListener(queues = RabbitMQConfig.FILA_PAGAMENTO)
     public void escutarFilaPagamentos(OrderCreatedEventDTO evento) {
-
-        log.info("=====================================================");
-        log.info("📬 [RABBITMQ] Novo evento consumido da fila: {}", RabbitMQConfig.FILA_PAGAMENTO);
+        log.info("[RABBITMQ] Novo evento consumido da fila: {}", RabbitMQConfig.FILA_PAGAMENTO);
 
         paymentService.processarPagamento(evento.orderId(), evento.totalPrice());
-
-        log.info("=====================================================");
     }
 
 }

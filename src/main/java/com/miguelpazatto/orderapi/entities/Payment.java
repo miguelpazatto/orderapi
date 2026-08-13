@@ -20,7 +20,7 @@ public class Payment {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @JoinColumn(name = "order_id", nullable = false)
+    @Column(nullable = false)
     private UUID orderId;
 
     @Column(nullable = false)

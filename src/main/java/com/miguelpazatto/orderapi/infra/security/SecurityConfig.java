@@ -34,7 +34,7 @@ public class SecurityConfig {
                         // 2. Vitrine de Produtos (Leitura pública, mutações exclusivas para ADMIN)
                         .requestMatchers(HttpMethod.GET, "/products").permitAll()
                         .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/products").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.POST, "/products").permitAll()
                         .requestMatchers(HttpMethod.PATCH, "/products/**").hasRole("ADMIN")
 
                         // 3. Gestão Logística de Pedidos (Apenas ADMIN envia e entrega)

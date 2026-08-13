@@ -26,7 +26,7 @@ public class EmailService {
 
     public void enviarEmailAtualizacaoPagamento(UUID orderId, PaymentStatus status, String emailDestino) {
         try {
-            log.info("📧 Montando o e-mail para enviar ao cliente: {}", emailDestino);
+            log.info("Montando o e-mail para enviar ao cliente: {}", emailDestino);
 
             SimpleMailMessage mensagemCliente = new SimpleMailMessage();
             mensagemCliente.setFrom(remetente);

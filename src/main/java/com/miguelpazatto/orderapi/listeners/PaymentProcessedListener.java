@@ -17,7 +17,7 @@ public class PaymentProcessedListener {
 
     @RabbitListener(queues = RabbitMQConfig.FILA_STATUS_PAGAMENTO)
     public void escutarAtualizacaoStatus(PaymentProcessedEventDTO evento) {
-        log.info("📥 [RABBITMQ] Recebendo atualização de status de pagamento para o Pedido: {}", evento.orderId());
+        log.info("[RABBITMQ] Recebendo atualização de status de pagamento para o Pedido: {}", evento.orderId());
 
         orderService.atualizarStatusPagamento(evento.orderId(), evento.paymentStatus());
     }
