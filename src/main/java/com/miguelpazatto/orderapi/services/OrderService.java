@@ -184,7 +184,7 @@ public class OrderService {
 
         } else if (paymentStatus == PaymentStatus.REJECTED) {
             order.setOrderStatus(OrderStatus.PAYMENT_FAILED);
-            log.info("❌ Pedido {} com falha no pagamento. Aguardando nova tentativa.", orderId);
+            log.info("Pedido {} com falha no pagamento. Aguardando nova tentativa.", orderId);
         }
 
         orderRepository.save(order);

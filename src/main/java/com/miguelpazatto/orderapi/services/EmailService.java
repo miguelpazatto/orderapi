@@ -37,7 +37,7 @@ public class EmailService {
                 mensagemCliente.setText("Olá!\n\nSeu pagamento foi aprovado com sucesso. Seu pedido já está sendo separado em nosso centro de distribuição.\n\nObrigado por comprar conosco!");
                 javaMailSender.send(mensagemCliente);
 
-                log.info("🛒 Notificando o setor de logística/dono sobre a nova venda...");
+                log.info("Notificando o setor de logística/dono sobre a nova venda...");
                 SimpleMailMessage mensagemDono = new SimpleMailMessage();
                 mensagemDono.setFrom(remetente);
                 mensagemDono.setTo(emailAdmin);
