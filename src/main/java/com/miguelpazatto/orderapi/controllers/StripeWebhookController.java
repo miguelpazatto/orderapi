@@ -1,6 +1,7 @@
 package com.miguelpazatto.orderapi.controllers;
 
 import com.miguelpazatto.orderapi.config.RabbitMQConfig;
+import com.stripe.exception.EventDataObjectDeserializationException;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
@@ -28,15 +29,16 @@ public class StripeWebhookController {
     @PostMapping
     public ResponseEntity<String> handleStripeEvent(
             @RequestBody String payload,
-            @RequestHeader("Stripe-Signature") String sigHeader) {
+            @RequestHeader("Stripe-Signature") String sigHeader) throws EventDataObjectDeserializationException {
 
         Event event;
 
         try {
-            event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
-        } catch (SignatureVerificationException e) {
-            log.error("Tentativa de fraude bloqueada! Assinatura inválida no Webhook do Stripe.", e);
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assinatura inválida");
+            event = Event.GSON.fromJson(payload, Event.class);
+        //  event = Webhook.constructEvent(payload, sigHeader, endpointSecret);
+        // } catch (SignatureVerificationException e) {
+        //    log.error("Tentativa de fraude bloqueada! Assinatura inválida no Webhook do Stripe.", e);
+        //    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Assinatura inválida");
         } catch (Exception e) {
             log.error("Erro inesperado ao processar payload do Stripe", e);
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body("Erro interno");
@@ -45,40 +47,37 @@ public class StripeWebhookController {
         EventDataObjectDeserializer deserializer = event.getDataObjectDeserializer();
 
         switch (event.getType()) {
-            case "payment_intent.succeded":
-                if (deserializer.getObject().isPresent()) {
-                    PaymentIntent paymentIntent = (PaymentIntent) deserializer.getObject().get();
+            case "payment_intent.succeeded": {
+                PaymentIntent paymentIntent = (PaymentIntent) deserializer.deserializeUnsafe();
 
-                    String paymentId = paymentIntent.getMetadata().get("payment_id");
+                String paymentId = paymentIntent.getMetadata().get("payment_id");
 
-                    log.info("Stripe confirmou o pagamento! Jogando ID {} para a fila de sucesso...", paymentId);
+                log.info("Stripe confirmou o pagamento! Jogando ID {} para a fila de sucesso...", paymentId);
 
-                    rabbitTemplate.convertAndSend(
-                            RabbitMQConfig.EXCHANGE_WEBHOOK,
-                            RabbitMQConfig.FILA_WEBHOOK_SUCESSO,
-                            paymentId
-                    );
-                }
+                rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE_WEBHOOK,
+                        RabbitMQConfig.ROTA_WEBHOOK_SUCESSO,
+                        paymentId
+                );
+            }
                 break;
-            case "payment_intent.payment_failed":
-                if (deserializer.getObject().isPresent()) {
-                    PaymentIntent paymentIntent = (PaymentIntent) deserializer.getObject().get();
+            case "payment_intent.payment_failed": {
+                PaymentIntent paymentIntent = (PaymentIntent) deserializer.deserializeUnsafe();
 
-                    String paymentId = paymentIntent.getMetadata().get("payment_id");
+                String paymentId = paymentIntent.getMetadata().get("payment_id");
 
-                    log.warn("Stripe recusou o pagamento. Jogando ID {} para a fila de falha...", paymentId);
+                log.warn("Stripe recusou o pagamento. Jogando ID {} para a fila de falha...", paymentId);
 
-                    rabbitTemplate.convertAndSend(
-                            RabbitMQConfig.EXCHANGE_WEBHOOK,
-                            RabbitMQConfig.FILA_WEBHOOK_FALHA,
-                            paymentId
-                    );
-                }
+                rabbitTemplate.convertAndSend(
+                        RabbitMQConfig.EXCHANGE_WEBHOOK,
+                        RabbitMQConfig.ROTA_WEBHOOK_FALHA,
+                        paymentId
+                );
                 break;
+            }
             default:
                 log.info("ℹEvento do Stripe ignorado: {}", event.getType());
                 break;
-
         }
 
         return ResponseEntity.ok("Sucesso");

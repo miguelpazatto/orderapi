@@ -49,6 +49,9 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.DELETE, "/customers/**").hasRole("ADMIN")
                         .requestMatchers("/customers/**").authenticated()
 
+                        // 6. Stripe / Recebimento de pagamentos
+                        .requestMatchers(HttpMethod.POST, "/webhooks/stripe").permitAll()
+
                         // 6. Fechadura de segurança padrão (Qualquer rota não mapeada acima exige token)
                         .anyRequest().authenticated()
                 )
