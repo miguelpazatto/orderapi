@@ -98,17 +98,51 @@ public class RabbitMQConfig {
 
     @Bean
     public Binding bindingWebhookSucesso(Queue webhookSucessoQueue, DirectExchange webhookExchange) {
-        return BindingBuilder
-                .bind(webhookSucessoQueue)
-                .to(webhookExchange)
-                .with(ROTA_WEBHOOK_SUCESSO);
+        return BindingBuilder.bind(webhookSucessoQueue).to(webhookExchange).with(ROTA_WEBHOOK_SUCESSO);
     }
 
     @Bean
     public Binding bindingWebhookFalha(Queue webhookFalhaQueue, DirectExchange webhookExchange) {
-        return BindingBuilder
-                .bind(webhookFalhaQueue)
-                .to(webhookExchange)
-                .with(ROTA_WEBHOOK_FALHA);
+        return BindingBuilder.bind(webhookFalhaQueue).to(webhookExchange).with(ROTA_WEBHOOK_FALHA);
     }
+
+    // ===============================================================
+    // --- MÓDULO EXPIRAÇÃO DO PEDIDO (DQL) ---
+    // ===============================================================
+
+    public static final String EXCHANGE_DLX = "pedido.dlx.exchange";
+    public static final String FILA_ESPERA_TTL = "pedido.espera.ttl.queue";
+    public static final String FILA_CANCELAMENTO_DLQ = "pedido.cancelamento.dlq.queue";
+    public static final String ROTA_ESPERA = "pedido.espera.routing.key";
+    public static final String ROTA_CANCELAMENTO = "pedido.cancelamento.routing.key";
+
+    @Bean
+    public Queue filaEspera() {
+        return QueueBuilder.durable(FILA_ESPERA_TTL)
+                .withArgument("x-dead-letter-exchange", EXCHANGE_DLX)
+                .withArgument("x-dead-letter-routing-key", ROTA_CANCELAMENTO)
+                .withArgument("x-message-ttl", 10000) //aumentar depois
+                .build();
+    }
+
+    @Bean
+    public Queue filaCancelamento() {
+        return new Queue(FILA_CANCELAMENTO_DLQ, true);
+    }
+
+    @Bean
+    public DirectExchange dlxExchange() {
+        return new DirectExchange(EXCHANGE_DLX);
+    }
+
+    @Bean
+    public Binding bindingFilaEspera(Queue filaEsperaTtl, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(filaEsperaTtl).to(dlxExchange).with(ROTA_ESPERA);
+    }
+
+    @Bean
+    public Binding bindingFilaCancelamento(Queue filaCancelamentoDlq, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(filaCancelamentoDlq).to(dlxExchange).with(ROTA_CANCELAMENTO);
+    }
+
 }
