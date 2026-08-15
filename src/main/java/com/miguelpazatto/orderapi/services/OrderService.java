@@ -195,4 +195,21 @@ public class OrderService {
 
         orderRepository.save(order);
     }
+
+    @Transactional
+    public void cancelarPedidoExpirado(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + orderId + " não encontrado"));
+
+        if (order.getOrderStatus() == OrderStatus.WAITING_PAYMENT ||
+                order.getOrderStatus() == OrderStatus.PAYMENT_FAILED) {
+
+            log.warn("Tempo esgotado (TTL)! Cancelando pedido {} e devolvendo estoque...", orderId);
+
+            this,cancelOrder(orderId)
+        } else {
+            log.info("Pedido {} expirou na fila, mas já estava com status {}. Nenhuma ação necessária.",
+                    orderId, order.getOrderStatus());
+        }
+     }
 }
