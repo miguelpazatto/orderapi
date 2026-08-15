@@ -111,8 +111,14 @@ public class OrderService {
                 RabbitMQConfig.ROTA_PEDIDO_CRIADO,
                 evento
         );
-
         log.info("Evento de criação do pedido {} enviado para a fila de pagamentos.", order.getId());
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_DLX,
+                RabbitMQConfig.ROTA_ESPERA,
+                order.getId()
+        );
+        log.info("Cronômetro de expiração iniciado para o pedido {}.", order.getId());
 
         return new OrderResponseDTO(order);
     }
