@@ -100,4 +100,26 @@ public class EmailService {
             log.error("ERRO AO ENVIAR E-MAIL DE CONFIRMAÇÃO DE ENTREGA para o pedido {}: {}", orderId, e.getMessage());
         }
     }
+
+    public void enviarEmailCancelamentoPorInatividade(UUID orderId, String emailDestino) {
+        try {
+            log.info("Disparando e-mail de cancelamento por inatividade para: {}", emailDestino);
+
+            SimpleMailMessage mensagem = new SimpleMailMessage();
+            mensagem.setFrom(remetente);
+            mensagem.setTo(emailDestino);
+
+            mensagem.setSubject("Aviso: Seu pedido #" + orderId + " foi cancelado");
+            mensagem.setText("Olá!\n\n" +
+                    "Notamos que o pagamento do seu pedido #" + orderId + " não foi identificado dentro do tempo limite.\n" +
+                    "Por esse motivo, seu pedido foi cancelado automaticamente e os itens retornaram ao nosso estoque.\n\n" +
+                    "Se você ainda tem interesse nos produtos, fique à vontade para realizar uma nova compra em nosso site!\n\n" +
+                    "Atenciosamente,\n" +
+                    "Equipe de Vendas");
+
+            javaMailSender.send(mensagem);
+        } catch (Exception e) {
+            log.error("ERRO AO ENVIAR E-MAIL DE CANCELAMENTO para o pedido {}: {}", orderId, e.getMessage());
+        }
+    }
 }

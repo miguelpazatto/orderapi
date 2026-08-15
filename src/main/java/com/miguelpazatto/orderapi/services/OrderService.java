@@ -206,10 +206,10 @@ public class OrderService {
 
             log.warn("Tempo esgotado (TTL)! Cancelando pedido {} e devolvendo estoque...", orderId);
 
-            this,cancelOrder(orderId)
+            this.cancelOrder(orderId);
         } else {
             log.info("Pedido {} expirou na fila, mas já estava com status {}. Nenhuma ação necessária.",
                     orderId, order.getOrderStatus());
         }
-     }
+    }
 }

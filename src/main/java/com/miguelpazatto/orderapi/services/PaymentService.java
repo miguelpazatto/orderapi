@@ -88,7 +88,6 @@ public class PaymentService {
         paymentRepository.save(payment);
 
         log.warn("Pagamento {} atualizado para REJECTED no banco de dados.", paymentId);
-        // TODO: Implementar no futuro o fluxo de cancelamento do pedido:
 
         PaymentProcessedEventDTO event = new PaymentProcessedEventDTO(payment);
 
