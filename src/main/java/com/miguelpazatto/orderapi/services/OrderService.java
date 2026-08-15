@@ -204,9 +204,11 @@ public class OrderService {
         if (order.getOrderStatus() == OrderStatus.WAITING_PAYMENT ||
                 order.getOrderStatus() == OrderStatus.PAYMENT_FAILED) {
 
-            log.warn("Tempo esgotado (TTL)! Cancelando pedido {} e devolvendo estoque...", orderId);
+            log.warn("Tempo esgotado (TTL)! Chamando método padrão para cancelar pedido {}...", orderId);
 
             this.cancelOrder(orderId);
+            emailService.enviarEmailCancelamentoPorInatividade(orderId, order.getCustomer().getEmail());
+
         } else {
             log.info("Pedido {} expirou na fila, mas já estava com status {}. Nenhuma ação necessária.",
                     orderId, order.getOrderStatus());
