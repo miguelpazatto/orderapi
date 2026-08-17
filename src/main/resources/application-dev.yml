@@ -42,3 +42,7 @@ stripe:
     key: ${STRIPE_SECRET_KEY}
   webhook:
     secret: ${STRIPE_WEBHOOK_SECRET}
+
+delivery:
+  api:
+    url: https://run.mocky.io/v3/4238e8cb-8f0a-48d6-96b6-3e9a7e6d0a7f
