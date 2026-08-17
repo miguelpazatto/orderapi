@@ -122,4 +122,26 @@ public class EmailService {
             log.error("ERRO AO ENVIAR E-MAIL DE CANCELAMENTO para o pedido {}: {}", orderId, e.getMessage());
         }
     }
+
+    public void enviarEmailAvisoExpiracao(UUID orderId, String emailDestino) {
+        try {
+            log.info("Disparando e-mail de AVISO PRÉVIO de expiração para: {}", emailDestino);
+
+            SimpleMailMessage mensagem = new SimpleMailMessage();
+            mensagem.setFrom(remetente);
+            mensagem.setTo(emailDestino);
+
+            mensagem.setSubject("Atenção: Seu pedido #" + orderId + " vai expirar em breve!");
+            mensagem.setText("Olá!\n\n" +
+                    "Notamos que você ainda não finalizou o pagamento do seu pedido #" + orderId + ".\n" +
+                    "Os itens estão reservados de forma segura para você, mas o tempo limite do carrinho irá expirar em breve.\n\n" +
+                    "Para garantir seus produtos, por favor, conclua o pagamento o quanto antes!\n\n" +
+                    "Atenciosamente,\n" +
+                    "Equipe de Vendas");
+
+            javaMailSender.send(mensagem);
+        } catch (Exception e) {
+            log.error("ERRO AO ENVIAR E-MAIL DE AVISO PRÉVIO para o pedido {}: {}", orderId, e.getMessage());
+        }
+    }
 }

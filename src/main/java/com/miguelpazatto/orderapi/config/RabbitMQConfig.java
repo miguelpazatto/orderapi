@@ -121,7 +121,7 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(FILA_ESPERA_TTL)
                 .withArgument("x-dead-letter-exchange", EXCHANGE_DLX)
                 .withArgument("x-dead-letter-routing-key", ROTA_CANCELAMENTO)
-                .withArgument("x-message-ttl", 10000) //aumentar depois
+                .withArgument("x-message-ttl", 1800000)
                 .build();
     }
 
@@ -160,7 +160,7 @@ public class RabbitMQConfig {
         return QueueBuilder.durable(FILA_ESPERA_AVISO_TTL)
                 .withArgument("x-dead-letter-exchange", EXCHANGE_DLX)
                 .withArgument("x-dead-letter-routing-key", ROTA_AVISO)
-                .withArgument("x-message-ttl", 5000)
+                .withArgument("x-message-ttl", 1200000)
                 .build();
     }
 

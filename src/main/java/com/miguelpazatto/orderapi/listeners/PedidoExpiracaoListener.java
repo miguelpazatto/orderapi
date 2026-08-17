@@ -22,4 +22,11 @@ public class PedidoExpiracaoListener {
 
         orderService.cancelarPedidoExpirado(orderId);
     }
+
+    @RabbitListener(queues = RabbitMQConfig.FILA_AVISO_DLQ)
+    public void processarAviso(UUID orderId) {
+        log.info("DLQ AVISO ACIONADA: Mensagem recebida no cemitério de alertas para o pedido {}", orderId);
+
+        orderService.alertarPedidoQuaseExpirado(orderId);
+    }
 }

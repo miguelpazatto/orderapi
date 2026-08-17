@@ -115,10 +115,16 @@ public class OrderService {
 
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_DLX,
+                RabbitMQConfig.ROTA_ESPERA_AVISO,
+                order.getId()
+        );
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_DLX,
                 RabbitMQConfig.ROTA_ESPERA,
                 order.getId()
         );
-        log.info("Cronômetro de expiração iniciado para o pedido {}.", order.getId());
+        log.info("Cronômetro de aviso e expiração iniciados para o pedido {}.", order.getId());
 
         return new OrderResponseDTO(order);
     }
@@ -212,6 +218,22 @@ public class OrderService {
         } else {
             log.info("Pedido {} expirou na fila, mas já estava com status {}. Nenhuma ação necessária.",
                     orderId, order.getOrderStatus());
+        }
+    }
+
+    public void alertarPedidoQuaseExpirado(UUID orderId) {
+        Order order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + orderId + " não encontrado"));
+
+        if (order.getOrderStatus() == OrderStatus.WAITING_PAYMENT ||
+                order.getOrderStatus() == OrderStatus.PAYMENT_FAILED) {
+
+            log.warn("Tempo de aviso esgotado (5s)! Enviando alerta para o cliente do pedido {}...", orderId);
+
+            emailService.enviarEmailAvisoExpiracao(orderId, order.getCustomer().getEmail());
+
+        } else {
+            log.info("Aviso ignorado: O cliente já pagou ou o pedido {} já não está pendente.", orderId);
         }
     }
 }
