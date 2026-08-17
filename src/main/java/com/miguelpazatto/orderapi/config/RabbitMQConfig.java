@@ -107,7 +107,7 @@ public class RabbitMQConfig {
     }
 
     // ===============================================================
-    // --- MÓDULO EXPIRAÇÃO DO PEDIDO (DQL) ---
+    // --- MÓDULO EXPIRAÇÃO DO PEDIDO ---
     // ===============================================================
 
     public static final String EXCHANGE_DLX = "pedido.dlx.exchange";
@@ -136,13 +136,48 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public Binding bindingFilaEspera(Queue filaEsperaTtl, DirectExchange dlxExchange) {
-        return BindingBuilder.bind(filaEsperaTtl).to(dlxExchange).with(ROTA_ESPERA);
+    public Binding bindingFilaEspera(Queue filaEspera, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(filaEspera).to(dlxExchange).with(ROTA_ESPERA);
     }
 
     @Bean
-    public Binding bindingFilaCancelamento(Queue filaCancelamentoDlq, DirectExchange dlxExchange) {
-        return BindingBuilder.bind(filaCancelamentoDlq).to(dlxExchange).with(ROTA_CANCELAMENTO);
+    public Binding bindingFilaCancelamento(Queue filaCancelamento, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(filaCancelamento).to(dlxExchange).with(ROTA_CANCELAMENTO);
     }
+
+    // ===============================================================
+    // --- MÓDULO AVISO PRÉVIO DE EXPIRAÇÃO (Trilha Paralela)       ---
+    // ===============================================================
+
+    public static final String FILA_ESPERA_AVISO_TTL = "pedido.espera.aviso.ttl.queue";
+    public static final String FILA_AVISO_DLQ = "pedido.aviso.dlq.queue";
+
+    public static final String ROTA_ESPERA_AVISO = "pedido.espera.aviso.routing.key";
+    public static final String ROTA_AVISO = "pedido.aviso.routing.key";
+
+    @Bean
+    public Queue filaEsperaAviso() {
+        return QueueBuilder.durable(FILA_ESPERA_AVISO_TTL)
+                .withArgument("x-dead-letter-exchange", EXCHANGE_DLX)
+                .withArgument("x-dead-letter-routing-key", ROTA_AVISO)
+                .withArgument("x-message-ttl", 5000)
+                .build();
+    }
+
+    @Bean
+    public Queue filaAvisoDlq() {
+        return new Queue(FILA_AVISO_DLQ, true);
+    }
+
+    @Bean
+    public Binding bindingFilaEsperaAviso(Queue filaEsperaAviso, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(filaEsperaAviso).to(dlxExchange).with(ROTA_ESPERA_AVISO);
+    }
+
+    @Bean
+    public Binding bindingFilaAvisoDlq(Queue filaAvisoDlq, DirectExchange dlxExchange) {
+        return BindingBuilder.bind(filaAvisoDlq).to(dlxExchange).with(ROTA_AVISO);
+    }
+
 
 }
