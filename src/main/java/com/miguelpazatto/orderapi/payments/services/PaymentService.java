@@ -66,7 +66,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Pagamento não encontrado com o ID: " + paymentId));
 
-        payment.setPaymentStatus(PaymentStatus.APPROVED);
+        payment.updateStatus(PaymentStatus.APPROVED);
         paymentRepository.save(payment);
 
         log.info("Pagamento {} atualizado para APPROVED no banco.", paymentId);
@@ -95,7 +95,7 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new RuntimeException("Pagamento não encontrado com o ID: " + paymentId));
 
-        payment.setPaymentStatus(PaymentStatus.REJECTED);
+        payment.updateStatus(PaymentStatus.REJECTED);
         paymentRepository.save(payment);
 
         log.warn("Pagamento {} atualizado para REJECTED no banco de dados.", paymentId);
