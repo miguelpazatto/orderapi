@@ -6,9 +6,7 @@ import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.core.services.EmailService;
 import com.miguelpazatto.orderapi.customers.entities.Customer;
 import com.miguelpazatto.orderapi.customers.repositories.CustomerRepository;
-import com.miguelpazatto.orderapi.orders.dtos.OrderCreatedEventDTO;
-import com.miguelpazatto.orderapi.orders.dtos.OrderRequestDTO;
-import com.miguelpazatto.orderapi.orders.dtos.OrderResponseDTO;
+import com.miguelpazatto.orderapi.orders.dtos.*;
 import com.miguelpazatto.orderapi.orders.entities.Order;
 import com.miguelpazatto.orderapi.orders.entities.OrderItem;
 import com.miguelpazatto.orderapi.orders.entities.enums.OrderStatus;
@@ -164,9 +162,17 @@ public class OrderService {
         }
 
         order.setOrderStatus(OrderStatus.SHIPPED);
-
         order = orderRepository.save(order);
+
         emailService.enviarEmailPedidoEnviado(order.getId(), order.getCustomer().getEmail());
+
+        OrderDispatchedEventDTO event = new OrderDispatchedEventDTO(order.getId());
+
+        rabbitTemplate.convertAndSend(
+                RabbitMQConfig.EXCHANGE_PEDIDOS,
+                RabbitMQConfig.FILA_PEDIDO_DESPACHADO,
+                event
+        );
 
         return new OrderResponseDTO(order);
     }

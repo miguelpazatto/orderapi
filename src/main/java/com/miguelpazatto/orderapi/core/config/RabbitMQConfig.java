@@ -10,21 +10,27 @@ import org.springframework.context.annotation.Configuration;
 public class RabbitMQConfig {
 
     // ===============================================================
-    // --- MÓDULO DE PEDIDOS (Dispara quando o pedido nasce)       ---
+    // --- MÓDULO DE PEDIDOS ---
     // ===============================================================
 
-    public static final String FILA_PAGAMENTO = "pagamento.queue";
     public static final String EXCHANGE_PEDIDOS = "pedidos.exchange";
+
+    // Rota 1: Pagamento
+    public static final String FILA_PAGAMENTO = "pagamento.queue";
     public static final String ROTA_PEDIDO_CRIADO = "pedido.criado.routing.key";
 
-    @Bean
-    public Queue pagamentoQueue() {
-        return new Queue(FILA_PAGAMENTO, true);
-    }
+    // Rota 2: Logística
+    public static final String FILA_PEDIDO_DESPACHADO = "pedido.despachado.queue";
+    public static final String ROTA_PEDIDO_DESPACHADO = "pedido.despachado.routing.key";
 
     @Bean
     public DirectExchange pedidosExchange() {
         return new DirectExchange(EXCHANGE_PEDIDOS);
+    }
+
+    @Bean
+    public Queue pagamentoQueue() {
+        return new Queue(FILA_PAGAMENTO, true);
     }
 
     @Bean
@@ -33,18 +39,32 @@ public class RabbitMQConfig {
     }
 
     @Bean
+    public Queue pedidoDespachadoQueue() {
+        return new Queue(FILA_PEDIDO_DESPACHADO, true);
+    }
+
+    @Bean
+    public Binding bindingPedidoDespachado(Queue pedidoDespachadoQueue, DirectExchange pedidosExchange) {
+        return BindingBuilder.bind(pedidoDespachadoQueue).to(pedidosExchange).with(ROTA_PEDIDO_DESPACHADO);
+    }
+
+    @Bean
     public MessageConverter jsonMessageConverter() {
         return new Jackson2JsonMessageConverter();
     }
 
-
     // ===============================================================
-    // --- MÓDULO DE PAGAMENTOS (Dispara quando finaliza análise)  ---
+    // --- MÓDULO DE PAGAMENTOS ---
     // ===============================================================
 
+    public static final String EXCHANGE_PAGAMENTO_CONCLUIDO = "pagamento.concluido.exchange";
     public static final String FILA_STATUS_PAGAMENTO = "status.pagamento.queue";
     public static final String FILA_NOTIFICACAO = "notificacao.queue";
-    public static final String EXCHANGE_PAGAMENTO_CONCLUIDO = "pagamento.concluido.exchange";
+
+    @Bean
+    public FanoutExchange pagamentoConcluidoExchange() {
+        return new FanoutExchange(EXCHANGE_PAGAMENTO_CONCLUIDO);
+    }
 
     @Bean
     public Queue pagamentoStatusQueue() {
@@ -54,11 +74,6 @@ public class RabbitMQConfig {
     @Bean
     public Queue notificacaoQueue() {
         return new Queue(FILA_NOTIFICACAO, true);
-    }
-
-    @Bean
-    public FanoutExchange pagamentoConcluidoExchange() {
-        return new FanoutExchange(EXCHANGE_PAGAMENTO_CONCLUIDO);
     }
 
     @Bean
@@ -72,14 +87,19 @@ public class RabbitMQConfig {
     }
 
     // ===============================================================
-    // --- MÓDULO WEBHOOK STRIPE (Ouvindo o provedor de pagamento) ---
+    // --- MÓDULO WEBHOOK STRIPE ---
     // ===============================================================
 
+    public static final String EXCHANGE_WEBHOOK = "webhook.stripe.exchange";
     public static final String FILA_WEBHOOK_SUCESSO = "webhook.pagamento.sucesso.queue";
     public static final String FILA_WEBHOOK_FALHA = "webhook.pagamento.falha.queue";
-    public static final String EXCHANGE_WEBHOOK = "webhook.stripe.exchange";
     public static final String ROTA_WEBHOOK_SUCESSO = "stripe.sucesso.routing.key";
     public static final String ROTA_WEBHOOK_FALHA = "stripe.falha.routing.key";
+
+    @Bean
+    public DirectExchange webhookExchange() {
+        return new DirectExchange(EXCHANGE_WEBHOOK);
+    }
 
     @Bean
     public Queue webhookSucessoQueue() {
@@ -89,11 +109,6 @@ public class RabbitMQConfig {
     @Bean
     public Queue webhookFalhaQueue() {
         return new Queue(FILA_WEBHOOK_FALHA, true);
-    }
-
-    @Bean
-    public DirectExchange webhookExchange() {
-        return new DirectExchange(EXCHANGE_WEBHOOK);
     }
 
     @Bean
@@ -107,7 +122,7 @@ public class RabbitMQConfig {
     }
 
     // ===============================================================
-    // --- MÓDULO EXPIRAÇÃO DO PEDIDO ---
+    // --- MÓDULO EXPIRAÇÃO DO PEDIDO (DLX) ---
     // ===============================================================
 
     public static final String EXCHANGE_DLX = "pedido.dlx.exchange";
@@ -115,6 +130,11 @@ public class RabbitMQConfig {
     public static final String FILA_CANCELAMENTO_DLQ = "pedido.cancelamento.dlq.queue";
     public static final String ROTA_ESPERA = "pedido.espera.routing.key";
     public static final String ROTA_CANCELAMENTO = "pedido.cancelamento.routing.key";
+
+    @Bean
+    public DirectExchange dlxExchange() {
+        return new DirectExchange(EXCHANGE_DLX);
+    }
 
     @Bean
     public Queue filaEspera() {
@@ -131,11 +151,6 @@ public class RabbitMQConfig {
     }
 
     @Bean
-    public DirectExchange dlxExchange() {
-        return new DirectExchange(EXCHANGE_DLX);
-    }
-
-    @Bean
     public Binding bindingFilaEspera(Queue filaEspera, DirectExchange dlxExchange) {
         return BindingBuilder.bind(filaEspera).to(dlxExchange).with(ROTA_ESPERA);
     }
@@ -146,12 +161,11 @@ public class RabbitMQConfig {
     }
 
     // ===============================================================
-    // --- MÓDULO AVISO PRÉVIO DE EXPIRAÇÃO (Trilha Paralela)       ---
+    // --- MÓDULO AVISO PRÉVIO DE EXPIRAÇÃO ---
     // ===============================================================
 
     public static final String FILA_ESPERA_AVISO_TTL = "pedido.espera.aviso.ttl.queue";
     public static final String FILA_AVISO_DLQ = "pedido.aviso.dlq.queue";
-
     public static final String ROTA_ESPERA_AVISO = "pedido.espera.aviso.routing.key";
     public static final String ROTA_AVISO = "pedido.aviso.routing.key";
 
@@ -179,5 +193,26 @@ public class RabbitMQConfig {
         return BindingBuilder.bind(filaAvisoDlq).to(dlxExchange).with(ROTA_AVISO);
     }
 
+    // ===============================================================
+    // --- MÓDULO DE LOGÍSTICA VOLTA ---
+    // ===============================================================
 
+    public static final String EXCHANGE_LOGISTICA = "logistica.exchange";
+    public static final String FILA_ENTREGA_CONCLUIDA = "entrega.concluida.queue";
+    public static final String ROTA_ENTREGA_CONCLUIDA = "entrega.concluida.routing.key";
+
+    @Bean
+    public DirectExchange logisticaExchange() {
+        return new DirectExchange(EXCHANGE_LOGISTICA);
+    }
+
+    @Bean
+    public Queue entregaConcluidaQueue() {
+        return new Queue(FILA_ENTREGA_CONCLUIDA, true);
+    }
+
+    @Bean
+    public Binding bindingEntregaConcluida(Queue entregaConcluidaQueue, DirectExchange logisticaExchange) {
+        return BindingBuilder.bind(entregaConcluidaQueue).to(logisticaExchange).with(ROTA_ENTREGA_CONCLUIDA);
+    }
 }
