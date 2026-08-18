@@ -1,6 +1,7 @@
 package com.miguelpazatto.orderapi.payments.controllers;
 
-import com.miguelpazatto.orderapi.config.RabbitMQConfig;
+
+import com.miguelpazatto.orderapi.core.config.RabbitMQConfig;
 import com.stripe.exception.SignatureVerificationException;
 import com.stripe.model.Event;
 import com.stripe.model.EventDataObjectDeserializer;
