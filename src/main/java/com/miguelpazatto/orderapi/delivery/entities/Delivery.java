@@ -1,5 +1,6 @@
 package com.miguelpazatto.orderapi.delivery.entities;
 
+import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
 import com.miguelpazatto.orderapi.delivery.entities.enums.DeliveryStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -47,7 +48,15 @@ public class Delivery {
     }
 
     public void updateStatus(DeliveryStatus newStatus) {
+        if (this.deliveryStatus == newStatus) {
+            return;
+        }
+         if (newStatus == DeliveryStatus.DELIVERED) {
+             throw new BusinessRuleException("Não é possível alterar o status de um pedido que já foi entregue.");
+         }
+
         this.deliveryStatus = newStatus;
         this.updatedAt = Instant.now();
     }
+
 }
