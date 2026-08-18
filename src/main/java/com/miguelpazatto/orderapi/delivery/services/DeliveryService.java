@@ -29,19 +29,16 @@ public class DeliveryService {
     @Transactional
     public void createDeliveryForOrder(UUID orderId) {
         Delivery delivery = new Delivery(orderId);
+        deliveryRepository.save(delivery);
+
+        log.info("Entrega salva no banco. Avisando transportadora para o pedido: {}", orderId);
 
         DeliveryRequestDTO request = new DeliveryRequestDTO(orderId);
 
-        log.info("Solicitando rastreio para o pedido {}", orderId);
-        DeliveryResponseDTO response = deliveryClient.solicitarRastreio(request);
-
-        if (response == null || response.trackingCode() == null || response.trackingCode().isBlank()) {
-            throw new ExternalIntegrationException("A transportadora não retornou um código de rastreio válido para o pedido: " + orderId);
+        try {
+            deliveryClient.solicitarRastreio(request);
+        } catch (Exception e) {
+            log.error("A transportadora falhou em receber a notificação, mas a entrega está salva. Pedido: {}", orderId);
         }
-
-        delivery.assignTrackingCode(response.trackingCode());
-        deliveryRepository.save(delivery);
-
-        log.info("Entrega criada com sucesso. Pedido: {} | Rastreio: {}", orderId, delivery.getTrackingCode());
     }
 }

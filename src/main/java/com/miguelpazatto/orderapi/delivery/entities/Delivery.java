@@ -43,6 +43,9 @@ public class Delivery {
     }
 
     public void assignTrackingCode(String trackingCode) {
+        if (this.trackingCode != null) {
+            throw new BusinessRuleException("Esta entrega já possui um código de rastreio.");
+        }
         this.trackingCode = trackingCode;
         this.updatedAt = Instant.now();
     }
@@ -51,7 +54,7 @@ public class Delivery {
         if (this.deliveryStatus == newStatus) {
             return;
         }
-         if (newStatus == DeliveryStatus.DELIVERED) {
+         if (this.deliveryStatus == DeliveryStatus.DELIVERED) {
              throw new BusinessRuleException("Não é possível alterar o status de um pedido que já foi entregue.");
          }
 
