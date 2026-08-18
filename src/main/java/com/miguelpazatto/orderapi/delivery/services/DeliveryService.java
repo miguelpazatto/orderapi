@@ -1,5 +1,6 @@
 package com.miguelpazatto.orderapi.delivery.services;
 
+import com.miguelpazatto.orderapi.core.exceptions.ExternalIntegrationException;
 import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.delivery.clients.DeliveryClient;
 import com.miguelpazatto.orderapi.delivery.dtos.DeliveryRequestDTO;

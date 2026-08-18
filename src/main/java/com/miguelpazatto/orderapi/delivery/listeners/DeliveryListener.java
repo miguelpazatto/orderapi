@@ -19,6 +19,6 @@ public class DeliveryListener {
     public void consumirPedidoDespachado(OrderDispatchedEventDTO event) {
         log.info("Recebido evento de pedido despachado para o ID: {}", event.orderId());
 
-        deliveryService.criarEntregaParaPedido(event.orderId());
+        deliveryService.createDeliveryForOrder(event.orderId());
     }
 }

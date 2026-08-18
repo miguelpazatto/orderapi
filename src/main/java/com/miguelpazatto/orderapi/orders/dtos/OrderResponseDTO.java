@@ -22,7 +22,7 @@ public record OrderResponseDTO(
                 entity.getPurchaseMoment(),
                 entity.getOrderStatus(),
                 entity.getTotalPrice(),
-                entity.getCustomer().getEmail(),
+                entity.getCustomerEmail(),
                 entity.getOrderItemList().stream().map(OrderItemResponseDTO::new).toList()
         );
     }

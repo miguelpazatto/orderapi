@@ -14,8 +14,8 @@ public record OrderItemResponseDTO(
 ) {
     public OrderItemResponseDTO(OrderItem item) {
         this(
-                item.getProduct().getId(),
-                item.getProduct().getName(),
+                item.getProductId(),
+                item.getProductName(),
                 item.getQuantity(),
                 item.getPrice(),
                 item.getPrice().multiply(BigDecimal.valueOf(item.getQuantity()))

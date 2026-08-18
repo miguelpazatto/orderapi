@@ -14,7 +14,7 @@ public record OrderCreatedEventDTO(
     public OrderCreatedEventDTO(Order entity) {
         this(
                 entity.getId(),
-                entity.getCustomer().getId(),
+                entity.getCustomerId(),
                 entity.getTotalPrice()
         );
     }

@@ -4,8 +4,9 @@ import com.miguelpazatto.orderapi.core.config.RabbitMQConfig;
 import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
 import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.core.services.EmailService;
+import com.miguelpazatto.orderapi.customers.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.customers.entities.Customer;
-import com.miguelpazatto.orderapi.customers.repositories.CustomerRepository;
+import com.miguelpazatto.orderapi.customers.services.CustomerService;
 import com.miguelpazatto.orderapi.orders.dtos.*;
 import com.miguelpazatto.orderapi.orders.entities.Order;
 import com.miguelpazatto.orderapi.orders.entities.OrderItem;
@@ -13,7 +14,7 @@ import com.miguelpazatto.orderapi.orders.entities.enums.OrderStatus;
 import com.miguelpazatto.orderapi.orders.repositories.OrderRepository;
 import com.miguelpazatto.orderapi.payments.entities.enums.PaymentStatus;
 import com.miguelpazatto.orderapi.products.entities.Product;
-import com.miguelpazatto.orderapi.products.repositories.ProductRepository;
+import com.miguelpazatto.orderapi.products.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.amqp.rabbit.core.RabbitTemplate;
@@ -22,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -33,8 +35,8 @@ import java.util.stream.Collectors;
 public class OrderService {
 
     private final OrderRepository orderRepository;
-    private final CustomerRepository customerRepository;
-    private final ProductRepository productRepository;
+    private final CustomerService customerService;
+    private final ProductService productService;
 
     private final RabbitTemplate rabbitTemplate;
 
@@ -65,42 +67,37 @@ public class OrderService {
                         Integer::sum
                 ));
 
-        Customer customer = customerRepository.findById(dto.customerId())
-                .orElseThrow(() -> new ResourceNotFoundException("Cliente com ID " + dto.customerId() + " não encontrado"));
+        CustomerResponseDTO customer = customerService.findById(dto.customerId());
 
-        Order order = new Order();
-        order.setCustomer(customer);
-
-        BigDecimal totalPrice = BigDecimal.ZERO;
+        List<Order.ItemData> itemsData = new ArrayList<>();
 
         for (Map.Entry<UUID, Integer> entry : groupedItems.entrySet()) {
             UUID productId = entry.getKey();
             Integer quantity = entry.getValue();
 
-            Product product = productRepository.findById(productId)
-                    .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + productId + " não encontrado"));
+            Product product = productService.findEntityById(productId);
 
             if (product.getAvailableStock() < quantity) {
                 throw new BusinessRuleException("Não há estoque disponível pro produto " + product.getName());
             }
 
-            product.setAvailableStock(product.getAvailableStock() - quantity);
+            product.decreaseStock(quantity);
+            productService.save(product);
 
-            OrderItem orderItem = new OrderItem();
-            orderItem.setOrder(order);
-            orderItem.setProduct(product);
-            orderItem.setQuantity(quantity);
-            orderItem.setPrice(product.getPrice());
-
-            order.getOrderItemList().add(orderItem);
-
-            BigDecimal subTotal = product.getPrice().multiply(BigDecimal.valueOf(quantity));
-            totalPrice = totalPrice.add(subTotal);
+            itemsData.add(new Order.ItemData(
+                    productId,
+                    product.getName(),
+                    quantity,
+                    product.getPrice()
+            ));
         }
 
-        order.setTotalPrice(totalPrice);
-        order.setOrderStatus(OrderStatus.WAITING_PAYMENT);
-        order.setPurchaseMoment(Instant.now());
+        Order order = new Order(
+                customer.id(),
+                customer.name(),
+                customer.email(),
+                itemsData
+        );
 
         order = orderRepository.save(order);
         log.info("Pedido {} salvo no banco de dados com sucesso.", order.getId());
@@ -135,18 +132,15 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
-        if (order.getOrderStatus() == OrderStatus.DELIVERED ||
-                order.getOrderStatus() == OrderStatus.SHIPPED ||
-                order.getOrderStatus() == OrderStatus.CANCELED) {
-            throw new BusinessRuleException("Pedido já enviado, entregue ou cancelado");
-        }
+        order.cancel();
 
         for (OrderItem item : order.getOrderItemList()) {
-            Product product = item.getProduct();
-            product.setAvailableStock(product.getAvailableStock() + item.getQuantity());
-        }
+            Product product = productService.findEntityById(item.getProductId());
 
-        order.setOrderStatus(OrderStatus.CANCELED);
+            product.updateStock(product.getAvailableStock() + item.getQuantity());
+
+            productService.save(product);
+        }
 
         order = orderRepository.save(order);
         return new OrderResponseDTO(order);
@@ -157,14 +151,9 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
-        if (order.getOrderStatus() != OrderStatus.PAID) {
-            throw new BusinessRuleException("Apenas pedidos com status PAGO podem ser enviados.");
-        }
+        order.dispatch();
 
-        order.setOrderStatus(OrderStatus.SHIPPED);
-        order = orderRepository.save(order);
-
-        emailService.enviarEmailPedidoEnviado(order.getId(), order.getCustomer().getEmail());
+        emailService.enviarEmailPedidoEnviado(order.getId(), order.getCustomerEmail());
 
         OrderDispatchedEventDTO event = new OrderDispatchedEventDTO(order.getId());
 
@@ -182,14 +171,11 @@ public class OrderService {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
 
-        if (order.getOrderStatus() != OrderStatus.SHIPPED) {
-            throw new BusinessRuleException("O pedido precisa ser ENVIADO antes de ser marcado como entregue.");
-        }
-
-        order.setOrderStatus(OrderStatus.DELIVERED);
+        order.deliver();
 
         order = orderRepository.save(order);
-        emailService.enviarEmailConfirmacaoEntrega(order.getId(), order.getCustomer().getEmail());
+
+        emailService.enviarEmailConfirmacaoEntrega(order.getId(), order.getCustomerEmail());
 
         return new OrderResponseDTO(order);
     }
@@ -200,11 +186,11 @@ public class OrderService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + orderId + " não encontrado"));
 
         if (paymentStatus == PaymentStatus.APPROVED) {
-            order.setOrderStatus(OrderStatus.PAID);
+            order.markAsPaid();
             log.info("Pedido {} atualizado para PAID!", orderId);
 
         } else if (paymentStatus == PaymentStatus.REJECTED) {
-            order.setOrderStatus(OrderStatus.PAYMENT_FAILED);
+            order.markAsPaymentFailed();
             log.info("Pedido {} com falha no pagamento. Aguardando nova tentativa.", orderId);
         }
 
@@ -222,7 +208,7 @@ public class OrderService {
             log.warn("Tempo esgotado (TTL)! Chamando método padrão para cancelar pedido {}...", orderId);
 
             this.cancelOrder(orderId);
-            emailService.enviarEmailCancelamentoPorInatividade(orderId, order.getCustomer().getEmail());
+            emailService.enviarEmailCancelamentoPorInatividade(orderId, order.getCustomerEmail());
 
         } else {
             log.info("Pedido {} expirou na fila, mas já estava com status {}. Nenhuma ação necessária.",
@@ -239,7 +225,7 @@ public class OrderService {
 
             log.warn("Tempo de aviso esgotado (5s)! Enviando alerta para o cliente do pedido {}...", orderId);
 
-            emailService.enviarEmailAvisoExpiracao(orderId, order.getCustomer().getEmail());
+            emailService.enviarEmailAvisoExpiracao(orderId, order.getCustomerEmail());
 
         } else {
             log.info("Aviso ignorado: O cliente já pagou ou o pedido {} já não está pendente.", orderId);
