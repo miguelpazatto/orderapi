@@ -6,7 +6,6 @@ import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.products.dtos.ProductRequestDTO;
 import com.miguelpazatto.orderapi.products.dtos.ProductResponseDTO;
 import com.miguelpazatto.orderapi.products.entities.Product;
-import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import com.miguelpazatto.orderapi.products.repositories.ProductRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -22,11 +21,20 @@ public class ProductService {
 
     private final ProductRepository productRepository;
 
+    public Product save(Product product) {
+        return productRepository.save(product);
+    }
+
     @Transactional(readOnly = true)
     public List<ProductResponseDTO> findAll() {
         return productRepository.findAll().stream()
                 .map(ProductResponseDTO::new)
                 .toList();
+    }
+
+    public Product findEntityById(UUID id) {
+        return productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
     }
 
     @Transactional(readOnly = true)
@@ -43,13 +51,13 @@ public class ProductService {
             throw new DataConflictException("Já existe um produto cadastrado com o SKU: " + dto.sku());
         }
 
-        Product product = new Product();
-        product.setName(dto.name());
-        product.setDescription(dto.description());
-        product.setPrice(dto.price());
-        product.setAvailableStock(dto.availableStock());
-        product.setSku(dto.sku());
-        product.setProductStatus(dto.availableStock() > 0 ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK);
+        Product product = new Product(
+                dto.name(),
+                dto.description(),
+                dto.price(),
+                dto.availableStock(),
+                dto.sku()
+        );
 
         product = productRepository.save(product);
         return new ProductResponseDTO(product);
@@ -61,8 +69,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
-        product.setAvailableStock(newStock);
-        product.setProductStatus(newStock > 0 ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK);
+        product.updateStock(newStock);
 
         product = productRepository.save(product);
         return new ProductResponseDTO(product);
@@ -77,29 +84,26 @@ public class ProductService {
             throw new BusinessRuleException("O valor do produto deve ser maior que zero");
         }
 
-        product.setPrice(newPrice);
+        product.updatePrice(newPrice);
 
         product = productRepository.save(product);
         return new ProductResponseDTO(product);
     }
 
     @Transactional
-    public ProductResponseDTO updateStatus(UUID id, ProductStatus productStatus) {
-        if (productStatus == null) {
-            throw new BusinessRuleException("O status do produto não pode ser nulo");
-        }
-
+    public void deactivate(UUID id) {
         Product product = productRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("Produto com ID " + id + " não encontrado"));
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
+        product.deactivate();
+        productRepository.save(product);
+    }
 
-        if (product.getProductStatus().equals(productStatus)) {
-            throw new DataConflictException("O produto já se encontra com o status " + productStatus);
-        }
-
-        product.setProductStatus(productStatus);
-
-        product = productRepository.save(product);
-        return new ProductResponseDTO(product);
+    @Transactional
+    public void activate(UUID id) {
+        Product product = productRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
+        product.activate();
+        productRepository.save(product);
     }
 
     @Transactional
@@ -107,13 +111,7 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
-        if (newName != null && !newName.isBlank()) {
-            product.setName(newName);
-        }
-
-        if (newDescription != null && !newDescription.isBlank()) {
-            product.setDescription(newDescription);
-        }
+        product.updateDetails(newName, newDescription);
 
         product = productRepository.save(product);
         return new ProductResponseDTO(product);

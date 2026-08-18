@@ -1,6 +1,7 @@
 package com.miguelpazatto.orderapi.auth.entities;
 
 import com.miguelpazatto.orderapi.auth.entities.enums.UserRole;
+import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
 import jakarta.persistence.*;
 import lombok.*;
 import org.springframework.security.core.GrantedAuthority;
@@ -16,9 +17,7 @@ import java.util.stream.Collectors;
 @Entity
 @Table(name = "tb_user")
 @Getter
-@Setter
-@NoArgsConstructor
-@AllArgsConstructor
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")
 public class User implements UserDetails {
 
@@ -26,19 +25,43 @@ public class User implements UserDetails {
     @GeneratedValue(strategy = GenerationType.UUID)
     private UUID id;
 
-    @Column(unique = true, nullable = false)
+    @Column(unique = true, nullable = false, updatable = false)
     private String email;
 
     @Column(nullable = false)
     private String password;
 
-    private boolean active = true;
+    private boolean active;
 
     @ElementCollection(fetch = FetchType.EAGER)
     @CollectionTable(name = "tb_user_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private Set<UserRole> roles = new HashSet<>();
+
+    public User(String email, String password, Set<UserRole> roles) {
+        this.email = email;
+        this.password = password;
+        if (roles != null && !roles.isEmpty()) {
+            this.roles = roles;
+        }
+        this.active = true;
+    }
+
+    public void deactivate() {
+        this.active = false;
+    }
+
+    public void activate() {
+        this.active = true;
+    }
+
+    public void updatePassword(String encodedPassword) {
+        if (encodedPassword == null || encodedPassword.isBlank()) {
+            throw new BusinessRuleException("A nova senha não pode ser vazia.");
+        }
+        this.password = encodedPassword;
+    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
@@ -74,6 +97,6 @@ public class User implements UserDetails {
 
     @Override
     public boolean isEnabled() {
-        return true;
+        return this.active;
     }
 }

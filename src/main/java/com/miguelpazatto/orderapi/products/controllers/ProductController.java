@@ -3,7 +3,6 @@ package com.miguelpazatto.orderapi.products.controllers;
 import com.miguelpazatto.orderapi.products.dtos.ProductRequestDTO;
 import com.miguelpazatto.orderapi.products.dtos.ProductResponseDTO;
 import com.miguelpazatto.orderapi.products.dtos.ProductUpdateDetailsRequestDTO;
-import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import com.miguelpazatto.orderapi.products.services.ProductService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -50,9 +49,16 @@ public class ProductController {
         return ResponseEntity.ok().body(productService.updatePrice(id, newPrice));
     }
 
-    @PatchMapping(value = "/{id}/status")
-    public ResponseEntity<ProductResponseDTO> updateStatus(@PathVariable UUID id, @RequestParam ProductStatus productStatus) {
-        return ResponseEntity.ok().body(productService.updateStatus(id, productStatus));
+    @PatchMapping("/{id}/deactivate")
+    public ResponseEntity<Void> deactivate(@PathVariable UUID id) {
+        productService.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping("/{id}/activate")
+    public ResponseEntity<Void> activate(@PathVariable UUID id) {
+        productService.activate(id);
+        return ResponseEntity.noContent().build();
     }
 
     @PatchMapping(value = "/{id}")
