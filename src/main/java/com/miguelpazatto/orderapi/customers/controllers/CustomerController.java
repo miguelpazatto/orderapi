@@ -35,7 +35,13 @@ public class CustomerController {
 
     @DeleteMapping(value = "/{id}")
     public ResponseEntity<Void> delete(@PathVariable UUID id) {
-        customerService.delete(id);
+        customerService.deactivate(id);
+        return ResponseEntity.noContent().build();
+    }
+
+    @PatchMapping(value = "/{id}/activate")
+    public ResponseEntity<Void> activate(@PathVariable UUID id) {
+        customerService.activate(id);
         return ResponseEntity.noContent().build();
     }
 }

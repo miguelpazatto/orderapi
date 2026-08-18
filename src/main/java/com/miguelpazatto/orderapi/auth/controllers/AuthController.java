@@ -6,6 +6,7 @@ import com.miguelpazatto.orderapi.auth.dtos.TokenDTO;
 import com.miguelpazatto.orderapi.auth.entities.User;
 import com.miguelpazatto.orderapi.auth.entities.enums.UserRole;
 import com.miguelpazatto.orderapi.auth.repositories.UserRepository;
+import com.miguelpazatto.orderapi.auth.services.AuthenticationService;
 import com.miguelpazatto.orderapi.core.infra.security.TokenService;
 import com.miguelpazatto.orderapi.customers.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.customers.services.CustomerService;
@@ -31,46 +32,17 @@ public class AuthController {
 
     private final AuthenticationManager authenticationManager;
     private final TokenService tokenService;
-    private final PasswordEncoder passwordEncoder;
-    private final UserRepository userRepository;
-    private final CustomerService customerService;
+    private final AuthenticationService authService;
 
     @PostMapping("/login")
     public ResponseEntity<TokenDTO> login(@RequestBody @Valid AuthenticationDTO dto) {
-        var usernamePassword = new UsernamePasswordAuthenticationToken(dto.email(), dto.password());
-        var auth = this.authenticationManager.authenticate(usernamePassword);
-        var token = tokenService.generateToken((User) auth.getPrincipal());
-        return ResponseEntity.ok(new TokenDTO(token));
+        TokenDTO tokenDto = authService.login(dto);
+        return ResponseEntity.ok(tokenDto);
     }
 
     @PostMapping("/register")
-    public ResponseEntity<CustomerResponseDTO> register(@RequestBody @Valid CustomerRegistrationDTO dto) {
-        if (userRepository.findByEmail(dto.email()) != null) {
-            return ResponseEntity.status(HttpStatus.CONFLICT).build();
-        }
-
-        String encryptedPassword = passwordEncoder.encode(dto.password());
-        User newUser = new User();
-        newUser.setEmail(dto.email());
-        newUser.setPassword(encryptedPassword);
-
-        newUser.setRoles(Set.of(UserRole.CUSTOMER));
-
-        User savedUser = userRepository.save(newUser);
-        var createdCustomer = customerService.createCustomerProfile(dto, savedUser);
-
-        var uri = ServletUriComponentsBuilder.fromCurrentContextPath()
-                .path("/customers/{id}")
-                .buildAndExpand(createdCustomer.id())
-                .toUri();
-
-        CustomerResponseDTO response = new CustomerResponseDTO(
-                createdCustomer.id(),
-                createdCustomer.name(),
-                createdCustomer.email(),
-                createdCustomer.phone()
-        );
-
-        return ResponseEntity.created(uri).body(response);
+    public ResponseEntity<TokenDTO> register(@RequestBody @Valid CustomerRegistrationDTO dto) {
+        TokenDTO tokenDto = authService.register(dto);
+        return ResponseEntity.status(HttpStatus.CREATED).body(tokenDto);
     }
 }
