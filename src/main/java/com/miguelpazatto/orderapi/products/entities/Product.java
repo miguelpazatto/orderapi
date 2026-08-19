@@ -42,6 +42,9 @@ public class Product {
     @Column(nullable = false)
     private ProductStatus productStatus;
 
+    @Version
+    private Long version;
+
     public Product(String name, String description, BigDecimal price, Integer availableStock, String sku) {
         this.name = name;
         this.description = description;
