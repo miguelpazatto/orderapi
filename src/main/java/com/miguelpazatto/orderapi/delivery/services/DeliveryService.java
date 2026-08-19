@@ -5,10 +5,12 @@ import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.delivery.clients.DeliveryClient;
 import com.miguelpazatto.orderapi.delivery.dtos.DeliveryRequestDTO;
 import com.miguelpazatto.orderapi.delivery.dtos.DeliveryResponseDTO;
+import com.miguelpazatto.orderapi.delivery.dtos.DeliveryUpdatePayloadDTO;
 import com.miguelpazatto.orderapi.delivery.entities.Delivery;
 import com.miguelpazatto.orderapi.delivery.repositories.DeliveryRepository;
 import com.miguelpazatto.orderapi.orders.entities.Order;
 import com.miguelpazatto.orderapi.orders.repositories.OrderRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -40,5 +42,11 @@ public class DeliveryService {
         } catch (Exception e) {
             log.error("A transportadora falhou em receber a notificação, mas a entrega está salva. Pedido: {}", orderId);
         }
+    }
+
+    public void processWebhookUpdate(@Valid DeliveryUpdatePayloadDTO dto) {
+
+
+
     }
 }
