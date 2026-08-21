@@ -3,6 +3,7 @@ spring:
     url: jdbc:postgresql://localhost:5432/shop
     username: shop
     password: shop
+
   jpa:
     hibernate:
       ddl-auto: update
@@ -10,11 +11,13 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
   rabbitmq:
     host: localhost
     port: 5672
     username: admin
     password: admin123
+
   mail:
     host: sandbox.smtp.mailtrap.io
     port: 2525

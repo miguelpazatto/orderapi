@@ -3,3 +3,9 @@ spring:
     name: orderapi
   profiles:
     active: dev
+
+  flyway:
+    enabled: true
+    create-schemas: true
+    default-schema: order_schema
+    schemas: user_schema, customer_schema, delivery_schema, order_schema, payment_schema, product_schema

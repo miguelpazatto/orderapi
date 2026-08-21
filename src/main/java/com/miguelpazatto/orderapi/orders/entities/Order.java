@@ -1,7 +1,6 @@
 package com.miguelpazatto.orderapi.orders.entities;
 
 import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
-import com.miguelpazatto.orderapi.orders.dtos.OrderItemRequestDTO;
 import com.miguelpazatto.orderapi.orders.entities.enums.OrderStatus;
 import jakarta.persistence.*;
 import lombok.*;
@@ -12,7 +11,7 @@ import java.util.List;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tb_order")
+@Table(name = "tb_order", schema = "order_schema")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")

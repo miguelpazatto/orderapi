@@ -9,7 +9,7 @@ import java.time.Instant;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tb_delivery")
+@Table(name = "tb_delivery", schema = "delivery_schema")
 @Getter
 @NoArgsConstructor
 @EqualsAndHashCode(of = "id")

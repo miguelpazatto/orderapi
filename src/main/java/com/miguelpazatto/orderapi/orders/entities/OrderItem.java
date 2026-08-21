@@ -10,9 +10,7 @@ import java.math.BigDecimal;
 import java.util.UUID;
 
 @Entity
-@Table(name = "tb_order_item", uniqueConstraints = {
-        @UniqueConstraint(columnNames = {"order_id", "product_id"})
-})
+@Table(name = "tb_order_item", schema = "order_schema")
 @Getter
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @EqualsAndHashCode(of = "id")

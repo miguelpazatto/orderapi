@@ -31,18 +31,13 @@ import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
-public class AuthenticationService implements UserDetailsService {
+public class AuthenticationService {
 
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final TokenService tokenService;
     private final AuthenticationManager authenticationManager;
     private final ApplicationEventPublisher eventPublisher;
-
-    @Override
-    public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByEmail(username);
-    }
 
     public TokenDTO login(AuthenticationDTO dto) {
         var usernamePassword = new UsernamePasswordAuthenticationToken(dto.email(), dto.password());
