@@ -34,7 +34,7 @@ public class User implements UserDetails {
     private boolean active;
 
     @ElementCollection(fetch = FetchType.EAGER)
-    @CollectionTable(name = "tb_user_roles", joinColumns = @JoinColumn(name = "user_id"))
+    @CollectionTable(name = "tb_user_roles", schema = "user_schema", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "role")
     @Enumerated(EnumType.STRING)
     private Set<UserRole> roles = new HashSet<>();
