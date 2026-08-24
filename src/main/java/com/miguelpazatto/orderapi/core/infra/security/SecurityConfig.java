@@ -27,32 +27,34 @@ public class SecurityConfig {
                 .csrf(csrf -> csrf.disable())
                 .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
                 .authorizeHttpRequests(authorize -> authorize
-                        // 1. Autenticação (Público)
+
+                        // 1. Módulo: AUTH
                         .requestMatchers(HttpMethod.POST, "/auth/login").permitAll()
                         .requestMatchers(HttpMethod.POST, "/auth/register").permitAll()
 
-                        // 2. Vitrine de Produtos (Leitura pública, mutações exclusivas para ADMIN)
+                        // 2. WEBHOOKS (Integrações Externas - Módulos Payment e Delivery)
+                        .requestMatchers(HttpMethod.POST, "/webhooks/stripe").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/webhooks/delivery").permitAll()
+
+                        // 3. Módulo: PRODUCTS
                         .requestMatchers(HttpMethod.GET, "/products").permitAll()
                         .requestMatchers(HttpMethod.GET, "/products/**").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/products").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/products/**").hasRole("ADMIN")
+                        .requestMatchers("/products/**").hasRole("ADMIN") // Engloba POST, PUT, PATCH, DELETE
 
-                        // 3. Gestão Logística de Pedidos (Apenas ADMIN envia e entrega)
+                        // 4. Módulo: ORDERS
                         .requestMatchers(HttpMethod.PATCH, "/orders/*/ship").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.PATCH, "/orders/*/deliver").hasRole("CUSTOMER")
-
-                        // 4. Pedidos Gerais (Clientes logados podem criar, listar os seus e cancelar)
+                        .requestMatchers(HttpMethod.PATCH, "/orders/*/deliver").hasRole("ADMIN")
                         .requestMatchers("/orders/**").authenticated()
 
-                        // 5. Clientes / Backoffice (Regras mais rígidas para gestão de clientes)
+                        // 5. Módulo: CUSTOMERS
                         .requestMatchers(HttpMethod.GET, "/customers").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/customers/**").hasRole("ADMIN")
                         .requestMatchers("/customers/**").authenticated()
 
-                        // 6. Stripe / Recebimento de pagamentos
-                        .requestMatchers(HttpMethod.POST, "/webhooks/stripe").permitAll()
+                        // 6. Módulo: PAYMENTS & DELIVERY
+                        .requestMatchers("/payments/**").hasRole("ADMIN")
+                        .requestMatchers("/deliveries/**").hasRole("ADMIN")
 
-                        // 6. Fechadura de segurança padrão (Qualquer rota não mapeada acima exige token)
                         .anyRequest().authenticated()
                 )
                 .addFilterBefore(securityFilter, UsernamePasswordAuthenticationFilter.class)
