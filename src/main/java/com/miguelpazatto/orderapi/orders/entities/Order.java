@@ -111,4 +111,8 @@ public class Order {
             this.orderStatus = OrderStatus.PAYMENT_FAILED;
         }
     }
+
+    public boolean isOwnedBy(UUID customerIdToCheck) {
+        return this.customerId.equals(customerIdToCheck);
+    }
 }

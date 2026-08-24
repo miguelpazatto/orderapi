@@ -1,9 +1,11 @@
 package com.miguelpazatto.orderapi.orders.services;
 
+import com.miguelpazatto.orderapi.auth.entities.User;
 import com.miguelpazatto.orderapi.core.config.RabbitMQConfig;
 import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
 import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.core.services.EmailService;
+import com.miguelpazatto.orderapi.core.utils.SecurityUtils;
 import com.miguelpazatto.orderapi.customers.dtos.CustomerResponseDTO;
 import com.miguelpazatto.orderapi.customers.entities.Customer;
 import com.miguelpazatto.orderapi.customers.services.CustomerService;
@@ -21,8 +23,7 @@ import org.springframework.amqp.rabbit.core.RabbitTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.math.BigDecimal;
-import java.time.Instant;
+import org.springframework.security.access.AccessDeniedException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -44,15 +45,26 @@ public class OrderService {
 
     @Transactional(readOnly = true)
     public List<OrderResponseDTO> findAll() {
-        return orderRepository.findAll().stream()
+        User loggedUser = SecurityUtils.getAuthenticatedUser();
+
+        if (loggedUser.getRoles().contains("ADMIN")) {
+            return orderRepository.findAll().stream()
+                    .map(OrderResponseDTO::new)
+                    .collect(Collectors.toList());
+        }
+
+        Customer customer = customerService.findByUserId(loggedUser.getId());
+        return orderRepository.findByCustomerId(customer.getId()).stream()
                 .map(OrderResponseDTO::new)
-                .toList();
+                .collect(Collectors.toList());
     }
 
     @Transactional(readOnly = true)
     public OrderResponseDTO findById(UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
+
+        validateOrderOwnership(order);
 
         return new OrderResponseDTO(order);
     }
@@ -131,6 +143,8 @@ public class OrderService {
     public OrderResponseDTO cancelOrder(UUID id) {
         Order order = orderRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido com ID " + id + " não encontrado"));
+
+        validateOrderOwnership(order);
 
         order.cancel();
 
@@ -229,6 +243,18 @@ public class OrderService {
 
         } else {
             log.info("Aviso ignorado: O cliente já pagou ou o pedido {} já não está pendente.", orderId);
+        }
+    }
+
+    private void validateOrderOwnership(Order order) {
+        User loggedUser = SecurityUtils.getAuthenticatedUser();
+
+        if (loggedUser.getRoles().contains("CUSTOMER")) {
+            Customer customer = customerService.findByUserId(loggedUser.getId());
+
+            if (!order.isOwnedBy(customer.getId())) {
+                throw new AccessDeniedException("Acesso negado.");
+            }
         }
     }
 }

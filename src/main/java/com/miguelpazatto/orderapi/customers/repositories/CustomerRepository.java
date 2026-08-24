@@ -4,6 +4,7 @@ import com.miguelpazatto.orderapi.customers.entities.Customer;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface CustomerRepository extends JpaRepository<Customer, UUID> {
@@ -11,4 +12,6 @@ public interface CustomerRepository extends JpaRepository<Customer, UUID> {
     boolean existsByEmail(String email);
 
     List<Customer> findByActiveTrue();
+
+    Optional<Customer> findByUserId(UUID userId);
 }
