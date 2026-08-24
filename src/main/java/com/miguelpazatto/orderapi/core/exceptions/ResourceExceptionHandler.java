@@ -6,11 +6,13 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
+import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.nio.file.AccessDeniedException;
 import java.time.Instant;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -95,6 +97,14 @@ public class ResourceExceptionHandler {
         return problemDetail;
     }
 
+    @ExceptionHandler(AuthenticationCredentialsNotFoundException.class)
+    public ProblemDetail handleAuthenticationNotFound(AuthenticationCredentialsNotFoundException e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(HttpStatus.UNAUTHORIZED, e.getMessage());
+        problemDetail.setTitle("Não Autorizado");
+        problemDetail.setProperty("timestamp", Instant.now());
+        return problemDetail;
+    }
+
     @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
     public ProblemDetail handleOptimisticLocking(ObjectOptimisticLockingFailureException e) {
         ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
@@ -103,7 +113,6 @@ public class ResourceExceptionHandler {
         );
         problemDetail.setTitle("Conflito de Concorrência");
         problemDetail.setProperty("timestamp", Instant.now());
-
         return problemDetail;
     }
 
