@@ -52,6 +52,10 @@ public class Product {
         this.availableStock = availableStock;
         this.sku = sku;
 
+        if (availableStock != null && availableStock < 0) {
+            throw new BusinessRuleException("O estoque inicial não pode ser negativo.");
+        }
+
         this.productStatus = (availableStock != null && availableStock > 0)
                 ? ProductStatus.ACTIVE
                 : ProductStatus.OUT_OF_STOCK;

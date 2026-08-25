@@ -1,4 +1,0 @@
-$kind: http-request
-url: "{{baseUrl}}/orders/{{orderId}}/ship"
-method: PATCH
-order: 2000
