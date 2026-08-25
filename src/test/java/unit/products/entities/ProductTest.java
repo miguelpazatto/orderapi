@@ -138,5 +138,107 @@ public class ProductTest {
                 .hasMessage("O estoque não pode ser nulo ou negativo.");
     }
 
+     @Test
+    @DisplayName("Deve reduzir o estoque e manter o status atual quando a quantidade retirada for menor que o estoque disponível")
+    void shouldDecreaseStockWhenQuantityIsLessThanAvailable() {
+        // Given
+        Integer quantity = 5;
+        Integer initialStock = 10;
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                initialStock,
+                "SKU-123");
+
+
+        // When
+        product.decreaseStock(quantity);
+
+        // Then
+        assertThat(product.getAvailableStock()).isEqualTo(initialStock - quantity);
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("Deve reduzir o estoque e alterar o status para OUT_OF_STOCK quando a quantidade retirada zerar o estoque")
+    void shouldDecreaseStockAndChangeStatusToOutOfStockWhenQuantityEqualsAvailable() {
+        // Given
+        Integer quantity = 10;
+        Integer initialStock = 10;
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                initialStock,
+                "SKU-123");
+
+        // When
+        product.decreaseStock(quantity);
+
+        // Then
+        assertThat(product.getAvailableStock()).isZero();
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando a quantidade a ser subtraída negativa")
+    void shouldThrowExceptionWhenQuantityIsNegative() {
+        // Given
+        Integer quantity = -10;
+        Integer initialStock = 5;
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                initialStock,
+                "SKU-123");
+
+        // When - Then
+        assertThatThrownBy(() -> product.decreaseStock(quantity))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessage("A quantidade para baixar do estoque deve ser maior que zero.");
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando a quantidade a ser subtraída for zero")
+    void shouldThrowExceptionWhenQuantityIsZero() {
+        // Given
+        Integer quantity = 0;
+        Integer initialStock = 5;
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                initialStock,
+                "SKU-123");
+
+        // When - Then
+        assertThatThrownBy(() -> product.decreaseStock(quantity))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessage("A quantidade para baixar do estoque deve ser maior que zero.");
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando a quantidade a ser subtraída for maior que o estoque")
+    void shouldThrowExceptionWhenQuantityIsBiggerThanAvailableStock() {
+        // Given
+        Integer quantity = 10;
+        Integer initialStock = 5;
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                initialStock,
+                "SKU-123");
+
+        // When - Then
+        assertThatThrownBy(() -> product.decreaseStock(quantity))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessage("Estoque insuficiente para o produto: " + product.getName());
+    }
+
+
+
 
 }

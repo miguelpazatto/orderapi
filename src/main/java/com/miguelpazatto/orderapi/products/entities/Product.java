@@ -69,7 +69,7 @@ public class Product {
         this.productStatus = (newStock > 0) ? ProductStatus.ACTIVE : ProductStatus.OUT_OF_STOCK;
     }
 
-    public void decreaseStock(int quantity) {
+    public void decreaseStock(Integer quantity) {
         if (quantity <= 0) {
             throw new BusinessRuleException("A quantidade para baixar do estoque deve ser maior que zero.");
         }
