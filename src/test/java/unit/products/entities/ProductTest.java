@@ -1,6 +1,7 @@
 package unit.products.entities;
 
 import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
+import com.miguelpazatto.orderapi.core.exceptions.DataConflictException;
 import com.miguelpazatto.orderapi.products.entities.Product;
 import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -14,7 +15,6 @@ import java.math.BigDecimal;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.springframework.util.Assert.isInstanceOf;
 
 public class ProductTest {
 
@@ -340,4 +340,98 @@ public class ProductTest {
         assertThat(product.getName()).isEqualTo(newName);
         assertThat(product.getDescription()).isEqualTo(originalDescription);
     }
+
+    @Test
+    @DisplayName("Deve inativar o produto alterando o status para INACTIVE")
+    void shouldDeactivateProduct() {
+        // Given
+        Product product = new Product(
+                "Mouse",
+                "Mouse",
+                new BigDecimal("100"),
+                10,
+                "SKU-1");
+
+        // When
+        product.deactivate();
+
+        // Then
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar inativar um produto que já está inativo")
+    void shouldThrowExceptionWhenDeactivatingAlreadyInactiveProduct() {
+        // Given
+        Product product = new Product("Mouse", "Mouse", new BigDecimal("100"), 10, "SKU-1");
+        product.deactivate();
+
+        // When - Then
+        assertThatThrownBy(() -> product.deactivate())
+                .isInstanceOf(DataConflictException.class)
+                .hasMessage("O produto já se encontra com o status INACTIVE");
+    }
+
+    @Test
+    @DisplayName("Deve ativar o produto como ACTIVE quando houver estoque disponível")
+    void shouldActivateAsActiveWhenStockIsPositive() {
+        // Given
+        Product product = new Product(
+                "Mouse",
+                "Mouse",
+                new BigDecimal("100"),
+                10,
+                "SKU-1");
+        product.deactivate();
+
+        // When
+        product.activate();
+
+        // Then
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.ACTIVE);
+    }
+
+    @Test
+    @DisplayName("Deve ativar o produto como OUT_OF_STOCK quando o estoque for zero")
+    void shouldActivateAsOutOfStockWhenStockIsZero() {
+        // Given
+        Product product = new Product(
+                "Mouse",
+                "Mouse",
+                new BigDecimal("100"),
+                0,
+                "SKU-1");
+        product.deactivate();
+
+        // When
+        product.activate();
+
+        // Then
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar ativar um produto que já está ACTIVE")
+    void shouldThrowExceptionWhenActivatingAlreadyActiveProduct() {
+        // Given
+        Product product = new Product("Mouse", "Mouse", new BigDecimal("100"), 10, "SKU-1");
+
+        // When - Then
+        assertThatThrownBy(() -> product.activate())
+                .isInstanceOf(DataConflictException.class)
+                .hasMessage("O produto já se encontra com o status ACTIVE");
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção ao tentar ativar um produto que já está OUT_OF_STOCK")
+    void shouldThrowExceptionWhenActivatingAlreadyOutOfStockProduct() {
+        // Given
+        Product product = new Product("Mouse", "Mouse", new BigDecimal("100"), 0, "SKU-1");
+
+        // When - Then
+        assertThatThrownBy(() -> product.activate())
+                .isInstanceOf(DataConflictException.class)
+                .hasMessage("O produto já se encontra com o status OUT_OF_STOCK");
+    }
+
 }
