@@ -6,6 +6,7 @@ import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
@@ -278,5 +279,65 @@ public class ProductTest {
                 .hasMessage("O preço deve ser maior que zero.");
     }
 
+    @Test
+    @DisplayName("Deve atualizar nome e descrição quando ambos os valores forem válidos")
+    void shouldUpdateBothNameAndDescription() {
+        // Given
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                10,
+                "SKU-123");
+        String newName = "Teclado Gamer";
+        String newDescription = "Teclado Mecânico RGB";
 
+        // When
+        product.updateDetails(newName, newDescription);
+
+        // Then
+        assertThat(product.getName()).isEqualTo(newName);
+        assertThat(product.getDescription()).isEqualTo(newDescription);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "\t", "\n"})
+    @DisplayName("Deve atualizar apenas a descrição e manter o nome original quando o novo nome for inválido")
+    void shouldUpdateOnlyDescriptionWhenNewNameIsInvalid(String invalidName) {
+        // Given
+        String originalName = "Teclado";
+        Product product = new Product(
+                originalName,
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                10,
+                "SKU-123");
+        String newDescription = "Teclado com Switch Red";
+
+        // When
+        product.updateDetails(invalidName, newDescription);
+
+        // Then
+        assertThat(product.getName()).isEqualTo(originalName);
+        assertThat(product.getDescription()).isEqualTo(newDescription);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = {"   ", "\t", "\n"})
+    @DisplayName("Deve atualizar apenas o nome e manter a descrição original quando a nova descrição for inválida")
+    void shouldUpdateOnlyNameWhenNewDescriptionIsInvalid(String invalidDescription) {
+        // Given
+        String originalDescription = "Teclado Mecânico";
+        Product product = new Product("Teclado", originalDescription, new BigDecimal("300.00"), 10, "SKU-123");
+        String newName = "Teclado Gamer";
+
+        // When
+        product.updateDetails(newName, invalidDescription);
+
+        // Then
+        assertThat(product.getName()).isEqualTo(newName);
+        assertThat(product.getDescription()).isEqualTo(originalDescription);
+    }
 }
