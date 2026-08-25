@@ -5,6 +5,8 @@ import com.miguelpazatto.orderapi.products.entities.Product;
 import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 
 import java.math.BigDecimal;
 
@@ -181,11 +183,11 @@ public class ProductTest {
         assertThat(product.getProductStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK);
     }
 
-    @Test
-    @DisplayName("Deve lançar exceção quando a quantidade a ser subtraída negativa")
-    void shouldThrowExceptionWhenQuantityIsNegative() {
+    @ParameterizedTest
+    @ValueSource(ints = {0, -1, -10})
+    @DisplayName("Deve lançar exceção quando a quantidade for zero ou negativa")
+    void shouldThrowExceptionWhenQuantityIsZeroOrNegative(int invalidQuantity) {
         // Given
-        Integer quantity = -10;
         Integer initialStock = 5;
         Product product = new Product(
                 "Teclado",
@@ -195,29 +197,11 @@ public class ProductTest {
                 "SKU-123");
 
         // When - Then
-        assertThatThrownBy(() -> product.decreaseStock(quantity))
+        assertThatThrownBy(() -> product.decreaseStock(invalidQuantity))
                 .isInstanceOf(BusinessRuleException.class)
                 .hasMessage("A quantidade para baixar do estoque deve ser maior que zero.");
     }
 
-    @Test
-    @DisplayName("Deve lançar exceção quando a quantidade a ser subtraída for zero")
-    void shouldThrowExceptionWhenQuantityIsZero() {
-        // Given
-        Integer quantity = 0;
-        Integer initialStock = 5;
-        Product product = new Product(
-                "Teclado",
-                "Teclado Mecânico",
-                new BigDecimal("300.00"),
-                initialStock,
-                "SKU-123");
-
-        // When - Then
-        assertThatThrownBy(() -> product.decreaseStock(quantity))
-                .isInstanceOf(BusinessRuleException.class)
-                .hasMessage("A quantidade para baixar do estoque deve ser maior que zero.");
-    }
 
     @Test
     @DisplayName("Deve lançar exceção quando a quantidade a ser subtraída for maior que o estoque")
@@ -238,7 +222,61 @@ public class ProductTest {
                 .hasMessage("Estoque insuficiente para o produto: " + product.getName());
     }
 
+    @Test
+    @DisplayName("Deve alterar o preço quando ele for positivo")
+    void shouldUpdatePriceWhenNewPriceIsPositive() {
+        // Given
+        BigDecimal newPrice = BigDecimal.valueOf(100);
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                10,
+                "SKU-123");
 
+        // When
+        product.updatePrice(newPrice);
+
+        // Then
+        assertThat(product.getPrice()).isEqualByComparingTo(newPrice);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando preço for nulo")
+    void shouldThrowExceptionWhenNewPriceIsNull() {
+        // Given
+        BigDecimal newPrice = null;
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                10,
+                "SKU-123");
+
+        // When - Then
+        assertThatThrownBy(() -> product.updatePrice(newPrice))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessage("O preço deve ser maior que zero.");
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"0.00", "-0.01", "-150.50"})
+    @DisplayName("Deve lançar exceção quando o novo preço for zero ou negativo")
+    void shouldThrowExceptionWhenNewPriceIsZeroOrNegative(String invalidPriceString) {
+        // Given
+        BigDecimal invalidPrice = new BigDecimal(invalidPriceString);
+        Product product = new Product(
+                "Teclado",
+                "Teclado Mecânico",
+                new BigDecimal("300.00"),
+                10,
+                "SKU-123");
+
+        // When - Then
+        assertThatThrownBy(() -> product.updatePrice(invalidPrice))
+                .isInstanceOf(BusinessRuleException.class)
+                .hasMessage("O preço deve ser maior que zero.");
+    }
 
 
 }
