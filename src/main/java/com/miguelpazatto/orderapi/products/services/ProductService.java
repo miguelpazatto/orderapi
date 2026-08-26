@@ -80,10 +80,6 @@ public class ProductService {
         Product product = productRepository.findById(id)
                 .orElseThrow(() -> new ResourceNotFoundException("Produto com ID " + id + " não encontrado"));
 
-        if (newPrice.compareTo(BigDecimal.ZERO) <= 0) {
-            throw new BusinessRuleException("O valor do produto deve ser maior que zero");
-        }
-
         product.updatePrice(newPrice);
 
         product = productRepository.save(product);
