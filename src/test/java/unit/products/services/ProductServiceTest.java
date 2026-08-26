@@ -1,6 +1,8 @@
 package unit.products.services;
 
+import com.miguelpazatto.orderapi.core.exceptions.DataConflictException;
 import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
+import com.miguelpazatto.orderapi.products.dtos.ProductRequestDTO;
 import com.miguelpazatto.orderapi.products.dtos.ProductResponseDTO;
 import com.miguelpazatto.orderapi.products.entities.Product;
 import com.miguelpazatto.orderapi.products.repositories.ProductRepository;
@@ -186,6 +188,62 @@ public class ProductServiceTest {
         Mockito.verifyNoMoreInteractions(productRepository);
     }
 
+    @Test
+    @DisplayName("Deve inserir produto quando não houver conflito no banco")
+    void shouldInsertProductWhenThereIsNotConflict() {
+        // Given
+        ProductRequestDTO toBeInsertedProduct = new ProductRequestDTO(
+                "Monitor",
+                "Monitor FHD",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-123"
+        );
 
+        Product insertedProduct = new Product(
+                "Monitor",
+                "Monitor FHD",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-123"
+        );
 
+        Mockito.when(productRepository.existsBySku(toBeInsertedProduct.sku())).thenReturn(false);
+        Mockito.when(productRepository.save(Mockito.any(Product.class))).thenReturn(insertedProduct);
+
+        // When
+        ProductResponseDTO result = productService.insert(toBeInsertedProduct);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.name()).isEqualTo(toBeInsertedProduct.name());
+
+        Mockito.verify(productRepository, Mockito.times(1)).existsBySku(toBeInsertedProduct.sku());
+        Mockito.verify(productRepository, Mockito.times(1)).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar DataConflictException quando produto já estiver no banco")
+    void shouldThrowDataConflictExceptionWhenProductAlreadyExists() {
+        // Given
+        ProductRequestDTO toBeInsertedProduct = new ProductRequestDTO(
+                "Monitor",
+                "Monitor FHD",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-123"
+        );
+
+        Mockito.when(productRepository.existsBySku(toBeInsertedProduct.sku())).thenReturn(true);
+
+        // When - Then
+        assertThatThrownBy(() -> productService.insert(toBeInsertedProduct))
+                .isInstanceOf(DataConflictException.class)
+                .hasMessage("Já existe um produto cadastrado com o SKU: " + toBeInsertedProduct.sku());
+
+        Mockito.verify(productRepository, Mockito.times(1)).existsBySku(toBeInsertedProduct.sku());
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
 }
