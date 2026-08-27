@@ -5,6 +5,7 @@ import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
 import com.miguelpazatto.orderapi.products.dtos.ProductRequestDTO;
 import com.miguelpazatto.orderapi.products.dtos.ProductResponseDTO;
 import com.miguelpazatto.orderapi.products.entities.Product;
+import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import com.miguelpazatto.orderapi.products.repositories.ProductRepository;
 import com.miguelpazatto.orderapi.products.services.ProductService;
 import org.junit.jupiter.api.DisplayName;
@@ -349,11 +350,126 @@ public class ProductServiceTest {
         Mockito.verifyNoMoreInteractions(productRepository);
     }
 
+    @Test
+    @DisplayName("Deve inativar o produto e salvar no banco quando ID existir")
+    void shouldDeactivateProductWhenIdExists() {
+        // Given
+        UUID productId = UUID.randomUUID();
 
+        Product product = new Product(
+                "Mouse",
+                "Gamer",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-1"
+        );
 
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
 
+        // When
+        productService.deactivate(productId);
 
+        // Then
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.INACTIVE);
 
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.times(1)).save(product);
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException e não salvar ao inativar ID inexistente")
+    void shouldThrowExceptionWhenDeactivatingNonExistingId() {
+        // Given
+        UUID productId = UUID.randomUUID();
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThatThrownBy(() -> productService.deactivate(productId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Produto com ID " + productId + " não encontrado");
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve ativar o produto como ACTIVE e salvar no banco quando ID existir e houver estoque")
+    void shouldActivateProductAsActiveWhenIdExistsAndStockIsPositive() {
+        // Given
+        UUID productId = UUID.randomUUID();
+
+        Product product = new Product(
+                "Mouse",
+                "Gamer",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-1"
+        );
+
+        product.deactivate();
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        // When
+        productService.activate(productId);
+
+        // Then
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.ACTIVE);
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.times(1)).save(product);
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve ativar o produto como OUT_OF_STOCK e salvar no banco quando ID existir e estoque for zero")
+    void shouldActivateProductAsOutOfStockWhenIdExistsAndStockIsZero() {
+        // Given
+        UUID productId = UUID.randomUUID();
+
+        Product product = new Product(
+                "Teclado",
+                "Mecânico",
+                new BigDecimal("300.00"),
+                0,
+                "SKU-2"
+        );
+
+        product.deactivate();
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+
+        // When
+        productService.activate(productId);
+
+        // Then
+        assertThat(product.getProductStatus()).isEqualTo(ProductStatus.OUT_OF_STOCK);
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.times(1)).save(product);
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException e não salvar ao ativar ID inexistente")
+    void shouldThrowExceptionWhenActivatingNonExistingId() {
+        // Given
+        UUID productId = UUID.randomUUID();
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThatThrownBy(() -> productService.activate(productId))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Produto com ID " + productId + " não encontrado");
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
 
     @Test
     @DisplayName("Deve alterar os detalhes (nome e descrição) de um produto quando ID existir")
@@ -363,7 +479,13 @@ public class ProductServiceTest {
         String newName = "Monitor Ultrawide";
         String newDescription = "Monitor 29 polegadas WQHD";
 
-        Product product = new Product("Monitor", "Monitor FHD", new BigDecimal("100.00"), 10, "SKU-123");
+        Product product = new Product(
+                "Monitor",
+                "Monitor FHD",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-123"
+        );
 
         Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
         Mockito.when(productRepository.save(Mockito.any(Product.class))).thenReturn(product);
