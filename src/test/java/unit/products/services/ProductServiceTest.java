@@ -44,7 +44,7 @@ public class ProductServiceTest {
                 15,
                 "SKU-999");
 
-        Mockito.when(productRepository.save(productToSave)).thenReturn(productToSave);
+        Mockito.when(productRepository.save(Mockito.any(Product.class))).thenReturn(productToSave);
 
         // When
         Product result = productService.save(productToSave);
@@ -243,6 +243,160 @@ public class ProductServiceTest {
                 .hasMessage("Já existe um produto cadastrado com o SKU: " + toBeInsertedProduct.sku());
 
         Mockito.verify(productRepository, Mockito.times(1)).existsBySku(toBeInsertedProduct.sku());
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve alterar o estoque de um produto quando ID existir")
+    void shouldUpdateStockWhenIdExists() {
+        // Given
+        UUID productId = UUID.randomUUID();
+        Integer newStock = 15;
+
+        Product product = new Product(
+                "Monitor",
+                "Monitor FHD",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-123"
+        );
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        Mockito.when(productRepository.save(Mockito.any(Product.class))).thenReturn(product);
+
+        // When
+        ProductResponseDTO result = productService.updateStock(productId, newStock);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.name()).isEqualTo(product.getName());
+
+        assertThat(result.availableStock()).isEqualTo(newStock);
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.times(1)).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar estoque de ID inexistente")
+    void shouldThrowExceptionWhenUpdatingStockOfNonExistingId() {
+        // Given
+        UUID productId = UUID.randomUUID();
+        Integer newStock = 15;
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThatThrownBy(() -> productService.updateStock(productId, newStock))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Produto com ID " + productId + " não encontrado");
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve alterar o preço de um produto quando ID existir")
+    void shouldUpdatePriceWhenIdExists() {
+        // Given
+        UUID productId = UUID.randomUUID();
+        BigDecimal newPrice = new BigDecimal("250.00");
+
+        Product product = new Product(
+                "Monitor",
+                "Monitor FHD",
+                new BigDecimal("100.00"),
+                10,
+                "SKU-123"
+        );
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        Mockito.when(productRepository.save(Mockito.any(Product.class))).thenReturn(product);
+
+        // When
+        ProductResponseDTO result = productService.updatePrice(productId, newPrice);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.name()).isEqualTo(product.getName());
+
+        assertThat(result.price()).isEqualTo(newPrice);
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.times(1)).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar preço de ID inexistente")
+    void shouldThrowExceptionWhenUpdatingPriceOfNonExistingId() {
+        // Given
+        UUID productId = UUID.randomUUID();
+        BigDecimal newPrice = new BigDecimal("250.00");
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThatThrownBy(() -> productService.updatePrice(productId, newPrice))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Produto com ID " + productId + " não encontrado");
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+
+
+
+
+
+
+    @Test
+    @DisplayName("Deve alterar os detalhes (nome e descrição) de um produto quando ID existir")
+    void shouldUpdateDetailsWhenIdExists() {
+        // Given
+        UUID productId = UUID.randomUUID();
+        String newName = "Monitor Ultrawide";
+        String newDescription = "Monitor 29 polegadas WQHD";
+
+        Product product = new Product("Monitor", "Monitor FHD", new BigDecimal("100.00"), 10, "SKU-123");
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.of(product));
+        Mockito.when(productRepository.save(Mockito.any(Product.class))).thenReturn(product);
+
+        // When
+        ProductResponseDTO result = productService.updateDetails(productId, newName, newDescription);
+
+        // Then
+        assertThat(result).isNotNull();
+        assertThat(result.name()).isEqualTo(newName);
+        assertThat(result.description()).isEqualTo(newDescription);
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
+        Mockito.verify(productRepository, Mockito.times(1)).save(Mockito.any(Product.class));
+        Mockito.verifyNoMoreInteractions(productRepository);
+    }
+
+    @Test
+    @DisplayName("Deve lançar ResourceNotFoundException ao tentar atualizar detalhes de ID inexistente")
+    void shouldThrowExceptionWhenUpdatingDetailsOfNonExistingId() {
+        // Given
+        UUID productId = UUID.randomUUID();
+        String newName = "Monitor Ultrawide";
+        String newDescription = "Monitor 29 polegadas WQHD";
+
+        Mockito.when(productRepository.findById(productId)).thenReturn(Optional.empty());
+
+        // When - Then
+        assertThatThrownBy(() -> productService.updateDetails(productId, newName, newDescription))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessage("Produto com ID " + productId + " não encontrado");
+
+        Mockito.verify(productRepository, Mockito.times(1)).findById(productId);
         Mockito.verify(productRepository, Mockito.never()).save(Mockito.any(Product.class));
         Mockito.verifyNoMoreInteractions(productRepository);
     }
