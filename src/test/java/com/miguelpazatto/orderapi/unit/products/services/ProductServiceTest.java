@@ -1,4 +1,4 @@
-package unit.products.services;
+package com.miguelpazatto.orderapi.unit.products.services;
 
 import com.miguelpazatto.orderapi.core.exceptions.DataConflictException;
 import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;

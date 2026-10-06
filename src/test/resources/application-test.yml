@@ -1,0 +1,26 @@
+spring:
+  docker:
+    compose:
+      enabled: false
+
+  rabbitmq:
+    listener:
+      simple:
+        auto-startup: false
+      direct:
+        auto-startup: false
+
+delivery:
+  api:
+    url: localhost:9999
+
+api:
+  security:
+    token:
+      secret: integration-test-secret-key
+
+stripe:
+  webhook:
+    secret: whsec_integration_test
+  api:
+    key: sk_test_integration

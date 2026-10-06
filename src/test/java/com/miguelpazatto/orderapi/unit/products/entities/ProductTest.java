@@ -1,4 +1,4 @@
-package unit.products.entities;
+package com.miguelpazatto.orderapi.unit.products.entities;
 
 import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
 import com.miguelpazatto.orderapi.core.exceptions.DataConflictException;
