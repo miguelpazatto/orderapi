@@ -63,8 +63,15 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
             .body("size()", equalTo(2))
             .body("name", containsInAnyOrder(
                     firstProduct.getName(),
-                    secondProduct.getName()
-            ));
+                    secondProduct.getName()))
+            .body(
+                    "find {it.id == '" + firstProduct.getId() + "'}.name",
+                    equalTo(firstProduct.getName())
+            )
+            .body(
+                    "find {it.id == '" + secondProduct.getId() + "'}.name",
+                    equalTo(secondProduct.getName())
+            );
     }
 
     @Test
