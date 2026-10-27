@@ -11,6 +11,7 @@ import org.springframework.http.HttpStatus;
 
 import java.math.BigDecimal;
 import java.util.List;
+import java.util.UUID;
 
 import static io.restassured.RestAssured.given;
 
@@ -89,4 +90,42 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
 
     }
 
+    @Test
+    void shouldReturnProductWhenIdExists() {
+
+        Product product = new Product(
+                "Teclado",
+                "Teclado mecânico",
+                new BigDecimal("150.00"),
+                10,
+                "TEST-KEYBOARD"
+        );
+
+        productRepository.save(product);
+
+        given()
+            .spec(requestSpecification)
+        .when()
+            .get("/products/{id}", product.getId())
+        .then()
+                .log().ifValidationFails()
+                .statusCode(HttpStatus.OK.value())
+                .contentType(ContentType.JSON)
+                .body("id", equalTo(product.getId().toString()))
+                .body("name", equalTo(product.getName()));
+
+    }
+
+    @Test
+    void shouldReturnNotFoundWhenIdDoesNotExist() {
+        UUID nonexistentId = UUID.randomUUID();
+
+        given()
+            .spec(requestSpecification)
+        .when()
+            .get("products/{id}", nonexistentId)
+        .then()
+                .log().ifValidationFails()
+                .statusCode(HttpStatus.NOT_FOUND.value());
+    }
 }
