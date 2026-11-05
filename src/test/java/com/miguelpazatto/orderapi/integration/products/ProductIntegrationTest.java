@@ -1,6 +1,11 @@
 package com.miguelpazatto.orderapi.integration.products;
 
+import com.miguelpazatto.orderapi.auth.entities.User;
+import com.miguelpazatto.orderapi.auth.entities.enums.UserRole;
+import com.miguelpazatto.orderapi.core.infra.security.TokenService;
 import com.miguelpazatto.orderapi.integration.infra.AbstractIntegrationTest;
+import com.miguelpazatto.orderapi.integration.infra.TestUserFactory;
+import com.miguelpazatto.orderapi.products.dtos.ProductRequestDTO;
 import com.miguelpazatto.orderapi.products.entities.Product;
 import com.miguelpazatto.orderapi.products.repositories.ProductRepository;
 import io.restassured.http.ContentType;
@@ -8,8 +13,11 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.web.method.HandlerTypePredicate;
 
+import javax.management.relation.Role;
 import java.math.BigDecimal;
+import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,10 +29,18 @@ import static org.hamcrest.Matchers.containsInAnyOrder;
 public class ProductIntegrationTest extends AbstractIntegrationTest {
 
     private final ProductRepository productRepository;
+    private final TokenService tokenService;
+    private final TestUserFactory testUserFactory;
 
     @Autowired
-    ProductIntegrationTest (ProductRepository productRepository) {
+    ProductIntegrationTest (
+            ProductRepository productRepository,
+            TokenService tokenService,
+            TestUserFactory testUserFactory
+    ) {
         this.productRepository = productRepository;
+        this.tokenService = tokenService;
+        this.testUserFactory = testUserFactory;
     }
 
     @BeforeEach
@@ -128,4 +144,31 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
                 .log().ifValidationFails()
                 .statusCode(HttpStatus.NOT_FOUND.value());
     }
+
+    @Test
+    void shouldCreateProductWhenDataIsValid() {
+
+        User admin = testUserFactory.createAdmin();
+
+        ProductRequestDTO newProduct = new ProductRequestDTO(
+                "Teclado",
+                "Teclado mecânico",
+                new BigDecimal("150.00"),
+                10,
+                "TEST-KEYBOARD"
+        );
+
+        given()
+            .spec(authenticatedSpec(admin))
+            .body(newProduct)
+        .when()
+            .post("/products")
+        .then()
+                .log().ifValidationFails()
+                .statusCode(HttpStatus.CREATED.value())
+                .contentType(ContentType.JSON)
+                .body("name", equalTo(newProduct.name()))
+                .body("sku", equalTo(newProduct.sku()));
+    }
+
 }
