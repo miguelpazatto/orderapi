@@ -11,6 +11,9 @@ import com.miguelpazatto.orderapi.products.repositories.ProductRepository;
 import io.restassured.http.ContentType;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.method.HandlerTypePredicate;
@@ -20,9 +23,10 @@ import java.math.BigDecimal;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static io.restassured.RestAssured.given;
-
+import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.containsInAnyOrder;
 
@@ -33,7 +37,7 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
     private final TestUserFactory testUserFactory;
 
     @Autowired
-    ProductIntegrationTest (
+    ProductIntegrationTest(
             ProductRepository productRepository,
             TokenService tokenService,
             TestUserFactory testUserFactory
@@ -70,39 +74,39 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
         productRepository.saveAll(List.of(firstProduct, secondProduct));
 
         given()
-            .spec(requestSpecification)
-        .when()
-            .get("/products")
-        .then()
-            .log().ifValidationFails()
-            .statusCode(HttpStatus.OK.value())
-            .contentType(ContentType.JSON)
-            .body("size()", equalTo(2))
-            .body("name", containsInAnyOrder(
-                    firstProduct.getName(),
-                    secondProduct.getName()))
-            .body(
-                    "find {it.id == '" + firstProduct.getId() + "'}.name",
-                    equalTo(firstProduct.getName())
-            )
-            .body(
-                    "find {it.id == '" + secondProduct.getId() + "'}.name",
-                    equalTo(secondProduct.getName())
-            );
+                .spec(requestSpecification)
+                .when()
+                .get("/products")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(HttpStatus.OK.value())
+                .contentType(ContentType.JSON)
+                .body("size()", equalTo(2))
+                .body("name", containsInAnyOrder(
+                        firstProduct.getName(),
+                        secondProduct.getName()))
+                .body(
+                        "find {it.id == '" + firstProduct.getId() + "'}.name",
+                        equalTo(firstProduct.getName())
+                )
+                .body(
+                        "find {it.id == '" + secondProduct.getId() + "'}.name",
+                        equalTo(secondProduct.getName())
+                );
     }
 
     @Test
     void shouldReturnEmptyListWhenThereAreNoProducts() {
 
         given()
-            .spec(requestSpecification)
-        .when()
-            .get("/products")
-        .then()
-            .log().ifValidationFails()
-            .statusCode(HttpStatus.OK.value())
-            .contentType(ContentType.JSON)
-            .body("size()", equalTo(0));
+                .spec(requestSpecification)
+                .when()
+                .get("/products")
+                .then()
+                .log().ifValidationFails()
+                .statusCode(HttpStatus.OK.value())
+                .contentType(ContentType.JSON)
+                .body("size()", equalTo(0));
 
     }
 
@@ -120,10 +124,10 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
         productRepository.save(product);
 
         given()
-            .spec(requestSpecification)
-        .when()
-            .get("/products/{id}", product.getId())
-        .then()
+                .spec(requestSpecification)
+                .when()
+                .get("/products/{id}", product.getId())
+                .then()
                 .log().ifValidationFails()
                 .statusCode(HttpStatus.OK.value())
                 .contentType(ContentType.JSON)
@@ -137,10 +141,10 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
         UUID nonexistentId = UUID.randomUUID();
 
         given()
-            .spec(requestSpecification)
-        .when()
-            .get("products/{id}", nonexistentId)
-        .then()
+                .spec(requestSpecification)
+                .when()
+                .get("products/{id}", nonexistentId)
+                .then()
                 .log().ifValidationFails()
                 .statusCode(HttpStatus.NOT_FOUND.value());
     }
@@ -159,11 +163,11 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
         );
 
         given()
-            .spec(authenticatedSpec(admin))
-            .body(newProduct)
-        .when()
-            .post("/products")
-        .then()
+                .spec(authenticatedSpec(admin))
+                .body(newProduct)
+                .when()
+                .post("/products")
+                .then()
                 .log().ifValidationFails()
                 .statusCode(HttpStatus.CREATED.value())
                 .contentType(ContentType.JSON)
@@ -171,4 +175,61 @@ public class ProductIntegrationTest extends AbstractIntegrationTest {
                 .body("sku", equalTo(newProduct.sku()));
     }
 
+    @ParameterizedTest(name = "{index} - {0}")
+    @MethodSource("invalidProducts")
+    void shouldNotCreateProductWhenDataIsInvalid(
+        String scenario,
+        ProductRequestDTO request
+    ){
+        User admin = testUserFactory.createAdmin();
+
+        given()
+                .spec(authenticatedSpec(admin))
+                .body(request)
+        .when()
+                .post("/products")
+        .then()
+                .log().ifValidationFails()
+                .statusCode(HttpStatus.BAD_REQUEST.value());
+
+        assertThat(productRepository.count()).isZero();
+
+    }
+
+    static Stream<Arguments> invalidProducts() {
+        return Stream.of(
+                Arguments.of(
+                        "Nome vazio",
+                        new ProductRequestDTO(
+                                "",
+                                "Teclado mecânico",
+                                new BigDecimal("150.00"),
+                                10,
+                                "TEST_KEYBOARD"
+                        )
+                ),
+
+                Arguments.of(
+                        "Preço negativo",
+                        new ProductRequestDTO(
+                                "Teclado",
+                                "Teclado mecânico",
+                                new BigDecimal("-150.00"),
+                                10,
+                                "TEST_KEYBOARD"
+                        )
+                ),
+
+                Arguments.of(
+                        "Estoque negativo",
+                        new ProductRequestDTO(
+                                "Teclado",
+                                "Teclado mecânico",
+                                new BigDecimal("150.00"),
+                                -10,
+                                "TEST_KEYBOARD"
+                        )
+                )
+        );
+    }
 }
