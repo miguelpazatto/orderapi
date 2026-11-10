@@ -3,7 +3,9 @@ package com.miguelpazatto.orderapi.payments.services;
 
 import com.miguelpazatto.orderapi.core.config.RabbitMQConfig;
 import com.miguelpazatto.orderapi.orders.dtos.OrderResponseDTO;
-import com.miguelpazatto.orderapi.orders.services.OrderService;
+import com.miguelpazatto.orderapi.orders.repositories.OrderRepository;
+import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
+import org.springframework.transaction.annotation.Transactional;
 import com.miguelpazatto.orderapi.payments.dtos.PaymentProcessedEventDTO;
 import com.miguelpazatto.orderapi.payments.entities.Payment;
 import com.miguelpazatto.orderapi.payments.entities.enums.PaymentStatus;
@@ -30,7 +32,7 @@ public class PaymentService {
 
     private final RabbitTemplate rabbitTemplate;
 
-    private final OrderService orderService;
+    private final OrderRepository orderRepository;
 
     @Value("${stripe.api.key}")
     private String stripeApiKey;
@@ -60,11 +62,12 @@ public class PaymentService {
         }
     }
 
+    @Transactional
     public void processarPagamentoAprovado(UUID paymentId) {
         log.info("Processando aprovação para o pagamento ID: {}", paymentId);
 
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Pagamento não encontrado com o ID: " + paymentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado com o ID: " + paymentId));
 
         payment.updateStatus(PaymentStatus.APPROVED);
         paymentRepository.save(payment);
@@ -72,12 +75,13 @@ public class PaymentService {
         log.info("Pagamento {} atualizado para APPROVED no banco.", paymentId);
 
         UUID orderId = payment.getOrderId();
-        OrderResponseDTO orderDto = orderService.findById(orderId);
+        var order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado com o ID: " + orderId));
 
         PaymentProcessedEventDTO event = new PaymentProcessedEventDTO(
                 payment.getOrderId(),
                 payment.getPaymentStatus().name(),
-                orderDto.customerEmail()
+                order.getCustomerEmail()
         );
 
         rabbitTemplate.convertAndSend(
@@ -89,11 +93,12 @@ public class PaymentService {
         log.info("Mudança de status e notificação de pagamento concluído disparada para a Exchange Fanout!");
     }
 
+    @Transactional
     public void processarPagamentoRecusado(UUID paymentId) {
         log.info("Processando recusa para o pagamento ID: {}", paymentId);
 
         Payment payment = paymentRepository.findById(paymentId)
-                .orElseThrow(() -> new RuntimeException("Pagamento não encontrado com o ID: " + paymentId));
+                .orElseThrow(() -> new ResourceNotFoundException("Pagamento não encontrado com o ID: " + paymentId));
 
         payment.updateStatus(PaymentStatus.REJECTED);
         paymentRepository.save(payment);
@@ -101,12 +106,13 @@ public class PaymentService {
         log.warn("Pagamento {} atualizado para REJECTED no banco de dados.", paymentId);
 
         UUID orderId = payment.getOrderId();
-        OrderResponseDTO orderDto = orderService.findById(orderId);
+        var order = orderRepository.findById(orderId)
+                .orElseThrow(() -> new ResourceNotFoundException("Pedido não encontrado com o ID: " + orderId));
 
         PaymentProcessedEventDTO event = new PaymentProcessedEventDTO(
                 payment.getOrderId(),
                 payment.getPaymentStatus().name(),
-                orderDto.customerEmail()
+                order.getCustomerEmail()
         );
 
         rabbitTemplate.convertAndSend(

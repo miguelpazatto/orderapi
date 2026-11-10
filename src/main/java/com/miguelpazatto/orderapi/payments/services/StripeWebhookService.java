@@ -46,8 +46,15 @@ public class StripeWebhookService {
         }
 
         if (stripeObject instanceof PaymentIntent paymentIntent) {
-            String paymentId = paymentIntent.getMetadata().get("payment_id");
+            String paymentId = paymentIntent.getMetadata() == null ? null : paymentIntent.getMetadata().get("payment_id");
 
+            if (event.getType().equals("payment_intent.succeeded") || event.getType().equals("payment_intent.payment_failed")) {
+                try {
+                    java.util.UUID.fromString(paymentId);
+                } catch (IllegalArgumentException | NullPointerException e) {
+                    throw new ExternalIntegrationException("Identificador de pagamento inválido");
+                }
+            }
             switch (event.getType()) {
                 case "payment_intent.succeeded" -> {
                     log.info("Stripe confirmou o pagamento! Jogando ID {} para a fila de sucesso...", paymentId);
