@@ -1,6 +1,8 @@
 package com.miguelpazatto.orderapi.unit.core.services;
 
 import com.miguelpazatto.orderapi.core.services.EmailService;
+import com.miguelpazatto.orderapi.payments.entities.enums.PaymentStatus;
+import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -22,6 +24,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.verifyNoInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class EmailServiceTest {
@@ -76,6 +79,20 @@ class EmailServiceTest {
     void shouldHandleSmtpFailureWithoutPropagatingIt(String operation) {
         doThrow(new MailSendException("SMTP indisponível")).when(mailSender).send(any(SimpleMailMessage.class));
         assertThatCode(() -> send(operation)).doesNotThrowAnyException();
+    }
+
+    @ParameterizedTest
+    @EnumSource(value = PaymentStatus.class, names = {"APPROVED", "REJECTED"})
+    void shouldHandlePaymentEmailFailure(PaymentStatus status) {
+        doThrow(new MailSendException("SMTP indisponível")).when(mailSender).send(any(SimpleMailMessage.class));
+        assertThatCode(() -> emailService.enviarEmailAtualizacaoPagamento(orderId, status, recipient))
+                .doesNotThrowAnyException();
+    }
+
+    @Test
+    void shouldNotEmailPendingPayment() {
+        emailService.enviarEmailAtualizacaoPagamento(orderId, PaymentStatus.PENDING, recipient);
+        verifyNoInteractions(mailSender);
     }
 
     private void send(String operation) {
