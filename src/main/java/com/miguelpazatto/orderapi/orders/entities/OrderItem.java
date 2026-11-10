@@ -37,6 +37,12 @@ public class OrderItem {
     private BigDecimal price;
 
     public OrderItem(Order order, UUID productId, String productName, Integer quantity, BigDecimal price) {
+        if (quantity == null || quantity <= 0 || quantity > 999) {
+            throw new BusinessRuleException("A quantidade do item deve estar entre 1 e 999.");
+        }
+        if (price == null || price.compareTo(BigDecimal.ZERO) <= 0) {
+            throw new BusinessRuleException("O preço do item deve ser maior que zero.");
+        }
         this.order = order;
         this.productId = productId;
         this.productName = productName;

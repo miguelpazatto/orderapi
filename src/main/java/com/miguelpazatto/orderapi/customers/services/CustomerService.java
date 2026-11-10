@@ -45,6 +45,11 @@ public class CustomerService {
                 .orElseThrow(() -> new ResourceNotFoundException("Perfil de cliente não encontrado para o usuário logado."));
     }
 
+    public Customer findEntityById(UUID id) {
+        return customerRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Cliente com ID " + id + " não encontrado"));
+    }
+
     @Transactional
     public CustomerResponseDTO update(UUID id, CustomerUpdateDTO dto) {
         Customer customer = customerRepository.findById(id)

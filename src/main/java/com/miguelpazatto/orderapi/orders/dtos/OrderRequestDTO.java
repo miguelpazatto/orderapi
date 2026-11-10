@@ -14,6 +14,6 @@ public record OrderRequestDTO(
         @NotEmpty(message = "O pedido deve conter pelo menos um item")
         @NotNull(message = "A lista de itens não pode ser nula")
         @Valid
-        List<OrderItemRequestDTO> items
+        List<@NotNull @Valid OrderItemRequestDTO> items
 ) {
 }

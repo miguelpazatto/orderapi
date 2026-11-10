@@ -1,6 +1,7 @@
 package com.miguelpazatto.orderapi.orders.services;
 
 import com.miguelpazatto.orderapi.auth.entities.User;
+import com.miguelpazatto.orderapi.auth.entities.enums.UserRole;
 import com.miguelpazatto.orderapi.core.config.RabbitMQConfig;
 import com.miguelpazatto.orderapi.core.exceptions.BusinessRuleException;
 import com.miguelpazatto.orderapi.core.exceptions.ResourceNotFoundException;
@@ -16,6 +17,7 @@ import com.miguelpazatto.orderapi.orders.entities.enums.OrderStatus;
 import com.miguelpazatto.orderapi.orders.repositories.OrderRepository;
 import com.miguelpazatto.orderapi.payments.entities.enums.PaymentStatus;
 import com.miguelpazatto.orderapi.products.entities.Product;
+import com.miguelpazatto.orderapi.products.entities.enums.ProductStatus;
 import com.miguelpazatto.orderapi.products.services.ProductService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +27,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import org.springframework.security.access.AccessDeniedException;
 import java.util.ArrayList;
+import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
@@ -47,7 +50,7 @@ public class OrderService {
     public List<OrderResponseDTO> findAll() {
         User loggedUser = SecurityUtils.getAuthenticatedUser();
 
-        if (loggedUser.getRoles().contains("ADMIN")) {
+        if (loggedUser.getRoles().contains(UserRole.ADMIN)) {
             return orderRepository.findAll().stream()
                     .map(OrderResponseDTO::new)
                     .collect(Collectors.toList());
@@ -76,10 +79,15 @@ public class OrderService {
                 .collect(Collectors.toMap(
                         OrderItemRequestDTO::productId,
                         OrderItemRequestDTO::quantity,
-                        Integer::sum
+                        Integer::sum,
+                        LinkedHashMap::new
                 ));
 
-        CustomerResponseDTO customer = customerService.findById(dto.customerId());
+        Customer customer = customerService.findEntityById(dto.customerId());
+        validateCustomerOwnership(customer.getId());
+        if (!customer.isActive()) {
+            throw new BusinessRuleException("Não é possível criar pedido para cliente inativo.");
+        }
 
         List<Order.ItemData> itemsData = new ArrayList<>();
 
@@ -89,6 +97,12 @@ public class OrderService {
 
             Product product = productService.findEntityById(productId);
 
+            if (quantity <= 0 || quantity > 999) {
+                throw new BusinessRuleException("A quantidade total do produto deve estar entre 1 e 999.");
+            }
+            if (product.getProductStatus() == ProductStatus.INACTIVE) {
+                throw new BusinessRuleException("Não é possível comprar produto inativo.");
+            }
             if (product.getAvailableStock() < quantity) {
                 throw new BusinessRuleException("Não há estoque disponível pro produto " + product.getName());
             }
@@ -105,9 +119,9 @@ public class OrderService {
         }
 
         Order order = new Order(
-                customer.id(),
-                customer.name(),
-                customer.email(),
+                customer.getId(),
+                customer.getName(),
+                customer.getEmail(),
                 itemsData
         );
 
@@ -146,6 +160,10 @@ public class OrderService {
 
         validateOrderOwnership(order);
 
+        return cancelAndRestoreStock(order);
+    }
+
+    private OrderResponseDTO cancelAndRestoreStock(Order order) {
         order.cancel();
 
         for (OrderItem item : order.getOrderItemList()) {
@@ -173,7 +191,7 @@ public class OrderService {
 
         rabbitTemplate.convertAndSend(
                 RabbitMQConfig.EXCHANGE_PEDIDOS,
-                RabbitMQConfig.FILA_PEDIDO_DESPACHADO,
+                RabbitMQConfig.ROTA_PEDIDO_DESPACHADO,
                 event
         );
 
@@ -221,7 +239,7 @@ public class OrderService {
 
             log.warn("Tempo esgotado (TTL)! Chamando método padrão para cancelar pedido {}...", orderId);
 
-            this.cancelOrder(orderId);
+            cancelAndRestoreStock(order);
             emailService.enviarEmailCancelamentoPorInatividade(orderId, order.getCustomerEmail());
 
         } else {
@@ -247,14 +265,17 @@ public class OrderService {
     }
 
     private void validateOrderOwnership(Order order) {
+        validateCustomerOwnership(order.getCustomerId());
+    }
+
+    private void validateCustomerOwnership(UUID customerId) {
         User loggedUser = SecurityUtils.getAuthenticatedUser();
-
-        if (loggedUser.getRoles().contains("CUSTOMER")) {
-            Customer customer = customerService.findByUserId(loggedUser.getId());
-
-            if (!order.isOwnedBy(customer.getId())) {
-                throw new AccessDeniedException("Acesso negado.");
-            }
+        if (loggedUser.getRoles().contains(UserRole.ADMIN)) {
+            return;
+        }
+        Customer customer = customerService.findByUserId(loggedUser.getId());
+        if (!customer.getId().equals(customerId)) {
+            throw new AccessDeniedException("Acesso negado.");
         }
     }
 }

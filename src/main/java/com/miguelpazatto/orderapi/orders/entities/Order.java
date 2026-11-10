@@ -103,6 +103,10 @@ public class Order {
         if (this.orderStatus == OrderStatus.CANCELED) {
             throw new BusinessRuleException("Não é possível aprovar o pagamento de um pedido cancelado.");
         }
+        if (this.orderStatus == OrderStatus.PAID || this.orderStatus == OrderStatus.SHIPPED ||
+                this.orderStatus == OrderStatus.DELIVERED) {
+            return;
+        }
         this.orderStatus = OrderStatus.PAID;
     }
 

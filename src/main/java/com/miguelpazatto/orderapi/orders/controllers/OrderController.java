@@ -3,6 +3,7 @@ package com.miguelpazatto.orderapi.orders.controllers;
 import com.miguelpazatto.orderapi.orders.dtos.OrderRequestDTO;
 import com.miguelpazatto.orderapi.orders.dtos.OrderResponseDTO;
 import com.miguelpazatto.orderapi.orders.services.OrderService;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -30,7 +31,7 @@ public class OrderController {
     }
 
     @PostMapping
-    public ResponseEntity<OrderResponseDTO> insert(@RequestBody OrderRequestDTO dto) {
+    public ResponseEntity<OrderResponseDTO> insert(@RequestBody @Valid OrderRequestDTO dto) {
         OrderResponseDTO newDto = orderService.insert(dto);
         URI uri = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}")
                 .buildAndExpand(newDto.id()).toUri();
