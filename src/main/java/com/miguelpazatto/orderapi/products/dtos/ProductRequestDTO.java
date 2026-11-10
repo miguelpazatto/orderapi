@@ -14,9 +14,11 @@ public record ProductRequestDTO(
         @NotBlank(message = "Descrição do produto é obrigatória")
         String description,
 
-        @Positive(message = "Preço do produto não pode ser negativo")
+        @NotNull(message = "Preço do produto é obrigatório")
+        @Positive(message = "Preço do produto deve ser maior que zero")
         BigDecimal price,
 
+        @NotNull(message = "Estoque do produto é obrigatório")
         @PositiveOrZero(message = "O valor mínimo do estoque é 0")
         Integer availableStock,
 

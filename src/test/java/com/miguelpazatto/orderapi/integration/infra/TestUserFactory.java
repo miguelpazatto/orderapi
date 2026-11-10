@@ -16,6 +16,14 @@ public class TestUserFactory {
 
     private final UserRepository userRepository;
 
+    public User createCustomer() {
+        return userRepository.save(new User(
+                "customer-" + UUID.randomUUID() + "@test.com",
+                "1234",
+                Set.of(UserRole.CUSTOMER)
+        ));
+    }
+
     public User createAdmin() {
         User admin = new User(
                 "admin-" + UUID.randomUUID() + "@test.com",

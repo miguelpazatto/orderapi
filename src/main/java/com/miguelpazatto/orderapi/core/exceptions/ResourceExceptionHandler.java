@@ -9,8 +9,10 @@ import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.security.authentication.AuthenticationCredentialsNotFoundException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.bind.MissingServletRequestParameterException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import org.springframework.security.access.AccessDeniedException;
 import java.time.Instant;
@@ -66,6 +68,17 @@ public class ResourceExceptionHandler {
         problemDetail.setTitle("Malformed JSON Request");
         problemDetail.setProperty("timestamp", Instant.now());
 
+        return problemDetail;
+    }
+
+    @ExceptionHandler({MissingServletRequestParameterException.class, MethodArgumentTypeMismatchException.class})
+    public ProblemDetail handleInvalidRequestParameter(Exception e) {
+        ProblemDetail problemDetail = ProblemDetail.forStatusAndDetail(
+                HttpStatus.BAD_REQUEST,
+                "A requisição possui um parâmetro ausente ou com formato inválido."
+        );
+        problemDetail.setTitle("Invalid Request Parameter");
+        problemDetail.setProperty("timestamp", Instant.now());
         return problemDetail;
     }
 
