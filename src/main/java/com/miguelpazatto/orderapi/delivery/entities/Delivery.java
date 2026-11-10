@@ -43,6 +43,9 @@ public class Delivery {
     }
 
     public void assignTrackingCode(String trackingCode) {
+        if (trackingCode == null || trackingCode.isBlank()) {
+            throw new BusinessRuleException("O código de rastreio é obrigatório.");
+        }
         if (this.trackingCode != null) {
             throw new BusinessRuleException("Esta entrega já possui um código de rastreio.");
         }
@@ -51,6 +54,9 @@ public class Delivery {
     }
 
     public void updateStatus(DeliveryStatus newStatus) {
+        if (newStatus == null) {
+            throw new BusinessRuleException("O status da entrega é obrigatório.");
+        }
         if (this.deliveryStatus == newStatus) {
             return;
         }

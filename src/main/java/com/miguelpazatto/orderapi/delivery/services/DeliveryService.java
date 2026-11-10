@@ -58,18 +58,19 @@ public class DeliveryService {
                 .orElseThrow(() -> new ResourceNotFoundException("Pedido de ID " + dto.orderId() + "não encontrado"));
 
         if (delivery.getTrackingCode() == null) {
-            if (dto.trackingCode() == null) {
+            if (dto.trackingCode() == null || dto.trackingCode().isBlank()) {
                 throw new ExternalIntegrationException("O código de rastreio não pode ser nulo no primeiro envio");
             }
             delivery.assignTrackingCode(dto.trackingCode());
         }
 
         DeliveryStatus newStatus = DeliveryStatus.valueOf(dto.status());
+        boolean wasDelivered = delivery.getDeliveryStatus() == DeliveryStatus.DELIVERED;
         delivery.updateStatus(newStatus);
 
         deliveryRepository.save(delivery);
 
-        if (newStatus == DeliveryStatus.DELIVERED) {
+        if (newStatus == DeliveryStatus.DELIVERED && !wasDelivered) {
             rabbitTemplate.convertAndSend(
                     RabbitMQConfig.EXCHANGE_LOGISTICA,
                     RabbitMQConfig.ROTA_ENTREGA_CONCLUIDA,
