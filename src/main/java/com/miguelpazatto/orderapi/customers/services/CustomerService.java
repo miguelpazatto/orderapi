@@ -63,7 +63,7 @@ public class CustomerService {
 
     @Transactional
     public void deactivate(UUID id) {
-        Customer customer = customerRepository.findById(id).orElseThrow();
+        Customer customer = findEntityById(id);
         customer.deactivate();
         customerRepository.save(customer);
 
@@ -72,7 +72,7 @@ public class CustomerService {
 
     @Transactional
     public void activate(UUID id) {
-        Customer customer = customerRepository.findById(id).orElseThrow();
+        Customer customer = findEntityById(id);
         customer.activate();
         customerRepository.save(customer);
 

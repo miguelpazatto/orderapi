@@ -49,6 +49,7 @@ public class SecurityConfig {
                         // 5. Módulo: CUSTOMERS
                         .requestMatchers(HttpMethod.GET, "/customers").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.DELETE, "/customers/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.PATCH, "/customers/*/activate").hasRole("ADMIN")
                         .requestMatchers("/customers/**").authenticated()
 
                         // 6. Módulo: PAYMENTS & DELIVERY
